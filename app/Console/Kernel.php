@@ -13,7 +13,7 @@ class Kernel extends ConsoleKernel
      * @param  \Illuminate\Console\Scheduling\Schedule  $schedule
      * @return void
      */
-    
+
     protected $commands = [
         //
 	   'App\Console\Commands\DoClosings',
@@ -21,8 +21,22 @@ class Kernel extends ConsoleKernel
 
     protected function schedule(Schedule $schedule)
     {
-        // $schedule->command('daily:cron')->daily();
-        // $schedule->command('inspire')->hourly();
+        $schedule->call(function () {
+        $bankSettings = \App\Models\BankSetting::all();
+        $today = \Carbon\Carbon::today();
+
+        foreach ($bankSettings as $setting) {
+                \App\Models\BankSnapshot::updateOrCreate(
+                    [
+                        'bank_setting_id' => $setting->id,
+                        'snapshot_date' => $today,
+                    ],
+                    [
+                        'capital' => $setting->capital,
+                    ]
+                );
+            }
+        })->dailyAt('00:00');
     }
 
     /**

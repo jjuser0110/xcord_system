@@ -23,13 +23,17 @@ class User extends Authenticatable
     protected $fillable = [
         'name',
         'email',
-        'password',
-        'remember_token',
         'username',
+        'password',
         'role_id',
+        'date_of_birth',
+        'contact_no',
+        'main_wallet',
+        'last_login',
+        'remarks',
         'is_active',
-        'branch_id',
-        'company_id',
+        'is_banned',
+        'country_id'
     ];
 
     /**
@@ -56,13 +60,20 @@ class User extends Authenticatable
         return $this->belongsTo('App\Models\Role');
     }
 
-    public function branch()
+    /**
+     * Relationship: A user belongs to a country.
+     */
+    public function country()
     {
-        return $this->belongsTo('App\Models\Branch');
+        return $this->belongsTo(Country::class, 'country_id');
     }
 
-    public function company()
+    /**
+     * Relationship: Countries created by this user.
+     */
+    public function createdCountries()
     {
-        return $this->belongsTo('App\Models\Company');
+        return $this->hasMany(Country::class, 'created_by_id');
     }
+
 }

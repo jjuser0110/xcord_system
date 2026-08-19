@@ -6,21 +6,21 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-class Bank extends Model
+class Purpose extends Model
 {
     use HasFactory;
     use SoftDeletes;
 
     protected $fillable = [
-        'bank_name',
-        'short_name',
+        'title',
+        'description',
         'created_by_id',
         'country_id',
         'is_active'
     ];
 
     /**
-     * Relationship: The user who created this bank.
+     * Relationship: The user who created this purpose.
      */
     public function created_by()
     {
@@ -28,7 +28,7 @@ class Bank extends Model
     }
 
     /**
-     * Relationship: The country this bank belongs to.
+     * Relationship: The country this purpose belongs to.
      */
     public function country()
     {

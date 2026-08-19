@@ -16,9 +16,19 @@ return new class extends Migration
             $table->string('name');
             $table->string('email')->nullable();
             $table->timestamp('email_verified_at')->nullable();
+            $table->string('username')->unique();
             $table->string('password');
+            $table->integer('role_id');
+            $table->date('date_of_birth')->nullable();
+            $table->string('contact_no')->nullable();
+            $table->double('main_wallet')->default(0);
+            $table->datetime('last_login')->nullable();
+            $table->text('remarks')->nullable();
+            $table->integer('is_active')->default(1);
+            $table->integer('is_banned')->default(0);
             $table->rememberToken();
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

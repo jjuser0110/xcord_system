@@ -2,6 +2,12 @@
 
 $currentRoute = request()->route()->getName();
 
+// Define route groups for active states
+$isDashboard = Str::is('home*', $currentRoute);
+$isMasterSetting = Str::is(['country.*', 'bank.*', 'user.*', 'purpose.*'], $currentRoute);
+$isBankSetting = Str::is('bank_setting.*', $currentRoute);
+$isTransaction = Str::is('transaction.*', $currentRoute);
+
 @endphp
 <aside id="layout-menu" class="layout-menu menu-vertical menu bg-menu-theme">
     <div class="app-brand demo">
@@ -67,14 +73,13 @@ $currentRoute = request()->route()->getName();
 
     <ul class="menu-inner py-1">
         <!-- Dashboards -->
-        <li class="menu-item active open">
+        <li class="menu-item {{ $isDashboard ? 'active open' : '' }}">
             <a href="javascript:void(0);" class="menu-link menu-toggle">
                 <i class="menu-icon tf-icons bx bx-home-circle"></i>
                 <div data-i18n="Dashboards">Dashboards</div>
-                <div class="badge bg-primary rounded-pill ms-auto">5</div>
             </a>
             <ul class="menu-sub">
-                <li class="menu-item active">
+                <li class="menu-item {{ $isDashboard ? 'active' : '' }}">
                     <a href="{{ route('home') }}" class="menu-link">
                         <div data-i18n="Analytics">Analytics</div>
                     </a>
@@ -82,12 +87,52 @@ $currentRoute = request()->route()->getName();
             </ul>
         </li>
 
-        <li class="menu-item">
-            <a href="{{ route('bank.index') }}" class="menu-link">
-                <i class="menu-icon tf-icons bx bx-grid"></i>
-                <div>Bank</div>
+        <!-- Master Settings Dropdown -->
+        <li class="menu-item {{ $isMasterSetting ? 'active open' : '' }}">
+            <a href="javascript:void(0);" class="menu-link menu-toggle">
+                <i class="menu-icon tf-icons bx bx-cog"></i>
+                <div data-i18n="Master Settings">Master Settings</div>
+            </a>
+            <ul class="menu-sub">
+                <li class="menu-item {{ request()->routeIs('country.*') ? 'active' : '' }}">
+                    <a href="{{ route('country.index') }}" class="menu-link">
+                        <div data-i18n="Country">Country</div>
+                    </a>
+                </li>
+                <li class="menu-item {{ request()->routeIs('bank.*') ? 'active' : '' }}">
+                    <a href="{{ route('bank.index') }}" class="menu-link">
+                        <div data-i18n="Bank">Bank</div>
+                    </a>
+                </li>
+                <li class="menu-item {{ request()->routeIs('purpose.*') ? 'active' : '' }}">
+                    <a href="{{ route('purpose.index') }}" class="menu-link">
+                        <div data-i18n="Purpose">Purpose</div>
+                    </a>
+                </li>
+                <li class="menu-item {{ request()->routeIs('user.*') ? 'active' : '' }}">
+                    <a href="{{ route('user.index') }}" class="menu-link">
+                        <div data-i18n="User">User</div>
+                    </a>
+                </li>
+            </ul>
+        </li>
+
+        <!-- Bank Setting (Standalone) -->
+        <li class="menu-item {{ $isBankSetting ? 'active' : '' }}">
+            <a href="{{ route('bank_setting.index') }}" class="menu-link">
+                <i class="menu-icon tf-icons bx bx-slider-alt"></i>
+                <div data-i18n="Bank Setting">Bank Setting</div>
             </a>
         </li>
+
+        <!-- Transactions -->
+        <li class="menu-item {{ $isTransaction ? 'active' : '' }}">
+            <a href="{{ route('transaction.index') }}" class="menu-link">
+                <i class="menu-icon tf-icons bx bx-transfer-alt"></i>
+                <div data-i18n="Transaction">Transaction</div>
+            </a>
+        </li>
+
     </ul>
 </aside>
 <!-- end: sidebar -->

@@ -3,60 +3,66 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use Spatie\Browsershot\Browsershot;
-use App\Models\User;
-use App\Models\Package;
-use App\Models\PackageInvoice;
-use App\Models\BankAccount;
-use App\Models\DailyReport;
-use Bouncer;
-use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Facades\Hash;
+use App\Models\Transaction;
+use App\Models\BankSetting;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
-use DB;
 
 class HomeController extends Controller
 {
-    /**
-     * Create a new controller instance.
-     *
-     * @return void
-     */
     public function __construct()
     {
         $this->middleware('auth');
     }
 
-
-    public function index(Request $request)
+    public function index()
     {
-        
-        return view('home');
-    }
+        $countryId = Auth::user()->country_id;
+        $today = Carbon::today();
+        $currentMonth = Carbon::now()->format('Y-m');
 
-    public function change_password(Request $request){
-        $user = Auth::user();
+        $todayTransferToOwn = Transaction::where('country_id', $countryId)
+            ->whereDate('transaction_date', $today)
+            ->where('type', 'own')
+            ->where('transfer_direction', '-')
+            ->sum('amount');
 
-        $validator = Validator::make($request->all(), [
-            'new_password' => ['required', 'string', 'min:8', 'confirmed'],
-        ]);
+        $todayReceiveFromOwn = Transaction::where('country_id', $countryId)
+            ->whereDate('transaction_date', $today)
+            ->where('type', 'own')
+            ->where('transfer_direction', '+')
+            ->sum('amount');
 
+        $todayTransferToCustomer = Transaction::where('country_id', $countryId)
+            ->whereDate('transaction_date', $today)
+            ->where('type', 'customer')
+            ->where('transfer_direction', '-')
+            ->sum('amount');
 
-        if ($validator->fails()) {
-            $message = "";
-            foreach($validator->messages()->messages() as $m){
-                foreach($m as $mm){
-                    $message .=$mm.'\n';
-                }
-            }
-            return redirect()->back()->withInfo($message);
-        }
+        $todayReceiveFromCustomer = Transaction::where('country_id', $countryId)
+            ->whereDate('transaction_date', $today)
+            ->where('type', 'customer')
+            ->where('transfer_direction', '+')
+            ->sum('amount');
 
-        $user->update([
-            'password' => Hash::make($request->new_password),
-        ]);
+        $bankSettings = BankSetting::with('bank')
+            ->where('country_id', $countryId)
+            ->get();
 
-        return redirect()->route('home')->withSuccess('Password changed successfully.');
+        $totalSystemCapital = $bankSettings->sum('capital');
+
+        $monthlyVolume = Transaction::where('country_id', $countryId)
+            ->where('closing_month', $currentMonth)
+            ->sum('amount');
+
+        return view('home', compact(
+            'todayTransferToOwn',
+            'todayReceiveFromOwn',
+            'todayTransferToCustomer',
+            'todayReceiveFromCustomer',
+            'bankSettings',
+            'totalSystemCapital',
+            'monthlyVolume'
+        ));
     }
 }

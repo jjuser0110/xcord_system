@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\Country;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -13,6 +14,7 @@ class UserSeeder extends Seeder
 {
     public function run()
     {
+        $defaultCountry = Country::first();
         $user = User::where('username','superadmin')->first();
         $role = Bouncer::role()->where('name','superadmin')->first();
         if(!isset($user)){
@@ -22,12 +24,13 @@ class UserSeeder extends Seeder
                 'email'     => 'superadmin@gmail.com',
                 'password'     => Hash::make('admin99999'),
                 'role_id'     => $role->id,
+                'country_id'  => $defaultCountry->id,
                 'is_active'     => 1,
             ];
             $user = User::create($data);
             $user->assign($role->name);
         }
-        
+
         $abilities = Bouncer::ability()->all()->pluck('id');
         $bouncerRole = $user->getRoles()->first();
         Bouncer::allow($bouncerRole)->to($abilities);
@@ -41,12 +44,13 @@ class UserSeeder extends Seeder
                 'email'     => 'system@gmail.com',
                 'password'     => Hash::make('admin99999'),
                 'role_id'     => $role->id,
+                'country_id'  => $defaultCountry->id,
                 'is_active'     => 1,
             ];
             $user = User::create($data);
             $user->assign($role->name);
         }
-        
+
         $abilities = Bouncer::ability()->all()->pluck('id');
         $bouncerRole = $user->getRoles()->first();
         Bouncer::allow($bouncerRole)->to($abilities);
