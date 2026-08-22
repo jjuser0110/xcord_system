@@ -87,7 +87,8 @@ $isTransaction = Str::is('transaction.*', $currentRoute);
             </ul>
         </li>
 
-        <!-- Master Settings Dropdown -->
+        <!-- Master Settings Dropdown (Hidden for Company Staff) -->
+        @if(auth()->check() && !auth()->user()->isAn('company_staff'))
         <li class="menu-item {{ $isMasterSetting ? 'active open' : '' }}">
             <a href="javascript:void(0);" class="menu-link menu-toggle">
                 <i class="menu-icon tf-icons bx bx-cog"></i>
@@ -116,6 +117,7 @@ $isTransaction = Str::is('transaction.*', $currentRoute);
                 </li>
             </ul>
         </li>
+        @endif
 
         <!-- Bank Setting (Standalone) -->
         <li class="menu-item {{ $isBankSetting ? 'active' : '' }}">

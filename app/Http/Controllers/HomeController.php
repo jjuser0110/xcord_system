@@ -58,11 +58,11 @@ class HomeController extends Controller
         $this->scopeByCountry($monthlyVolumeQuery);
         $monthlyVolume = $monthlyVolumeQuery->sum('amount');
 
-        $currentDate = Carbon::today()->toDateString();
-        $dailySnapshotsQuery = BankSnapshot::with('bankSetting.bank')
-            ->where('snapshot_date', $currentDate);
-        $this->scopeByCountry($dailySnapshotsQuery);
-        $dailySnapshots = $dailySnapshotsQuery->get();
+        // $currentDate = Carbon::today()->toDateString();
+        // $dailySnapshotsQuery = BankSnapshot::with('bankSetting.bank')
+        //     ->where('snapshot_date', $currentDate);
+        // $this->scopeByCountry($dailySnapshotsQuery);
+        //$dailySnapshots = $dailySnapshotsQuery->get();
 
         return view('home', compact(
             'todayTransferToOwn',
@@ -72,7 +72,7 @@ class HomeController extends Controller
             'bankSettings',
             'totalSystemCapital',
             'monthlyVolume',
-            'dailySnapshots'
+            //'dailySnapshots'
         ));
     }
 }
