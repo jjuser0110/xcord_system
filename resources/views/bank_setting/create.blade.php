@@ -106,9 +106,21 @@
                     </div>
 
                     <!-- Capital -->
+                    <!-- Capital -->
                     <div class="col-md-6">
                         <label class="form-label" for="capital">Capital</label>
-                        <input type="number" step="0.01" min="0" id="capital" class="form-control" placeholder="0.00" name="capital" value="{{ $bank_setting->capital ?? '' }}" required/>
+                        <input type="number" step="0.01" min="0" id="capital"
+                               class="form-control {{ isset($bank_setting) ? 'bg-light' : '' }}"
+                               placeholder="0.00" name="capital"
+                               value="{{ $bank_setting->capital ?? '' }}"
+                               required
+                               @if(isset($bank_setting)) disabled @endif/>
+
+                        {{-- Hidden input to pass the capital value on form submit when disabled --}}
+                        @if(isset($bank_setting))
+                            <input type="hidden" name="capital" value="{{ $bank_setting->capital ?? '' }}">
+                        @endif
+
                         <div id="capital-error" class="text-danger small mt-1" style="display: none;">Capital cannot be negative or empty.</div>
                     </div>
 

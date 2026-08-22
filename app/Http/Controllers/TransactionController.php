@@ -6,19 +6,22 @@ use Illuminate\Http\Request;
 use App\Models\Transaction;
 use App\Models\BankSetting;
 use App\Models\Purpose;
+use App\Traits\CountryScopeTrait;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Carbon\Carbon;
 
+// TODO
 class TransactionController extends Controller
 {
+    use CountryScopeTrait;
     public function index(Request $request)
     {
-        $countryId = Auth::user()->country_id;
         $query = Transaction::with(['bankSetting.bank', 'targetBankSetting.bank', 'purpose', 'creator'])
-                ->where('country_id', $countryId)
                 ->latest();
+
+        $this->scopeByCountry($query);
 
         if ($request->filled('month')) {
             $query->where('closing_month', $request->month);
@@ -30,13 +33,10 @@ class TransactionController extends Controller
 
     public function create()
     {
-        $countryId = Auth::user()->country_id;
-
-        $bankSettings = BankSetting::with('bank')
-            ->where('country_id', $countryId)
-            ->get();
-
-        $purposes = Purpose::where('country_id', $countryId)->get();
+        $query = BankSetting::with('bank');
+        $this->scopeByCountry($query);
+        $bankSettings = $query->get();
+        $purposes = Purpose::all();
 
         return view('transaction.create', compact('bankSettings', 'purposes'));
     }

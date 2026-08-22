@@ -12,34 +12,33 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth;
 
+// Master setting just open for superadmin
 class PurposeController extends Controller
 {
     public function index(Request $request)
     {
-        // TODO: Client decides where conditions
-        $purpose = Purpose::with('country')->latest()->get();
+        $purpose = Purpose::latest()->get();
 
         return view('purpose.index')->with('purpose',$purpose);
     }
 
     public function create()
     {
-        $countries = Country::where('is_active', 1)->get();
-        return view('purpose.create', compact('countries'));
+        return view('purpose.create');
     }
 
     public function store(Request $request)
     {
         $validated = $request->validate([
             'title'       => 'required|string|max:255',
-            'description' => 'required|string',
-            'country_id'  => 'required|exists:countries,id',
+            'description' => 'nullable|string',
+            'country_id'  => 'nullable|exists:countries,id',
         ]);
 
         Purpose::create([
             'title'         => $validated['title'],
-            'description'   => $validated['description'],
-            'country_id'    => $validated['country_id'],
+            'description'   => $validated['description'] ?? null,
+            'country_id'    => $validated['country_id'] ?? null,
             'created_by_id' => Auth::id(),
             'is_active'     => 1,
         ]);
@@ -57,8 +56,8 @@ class PurposeController extends Controller
     {
         $validated = $request->validate([
             'title'       => 'required|string|max:255',
-            'description' => 'required|string',
-            'country_id'  => 'required|exists:countries,id',
+            'description' => 'nullable|string',
+            'country_id'  => 'nullable|exists:countries,id',
         ]);
 
         $purpose->update($validated);

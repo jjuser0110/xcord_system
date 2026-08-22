@@ -26,8 +26,8 @@
                     <thead>
                         <tr>
                             <th>Purpose Title</th>
-                            <th>Description</th>
-                            <th>Country/Currency</th>
+                            {{-- <th>Description</th>
+                            <th>Country/Currency</th> --}}
                             <th>Actions</th>
                         </tr>
                     </thead>
@@ -35,8 +35,8 @@
                         @foreach($purpose as $row)
                         <tr>
                             <td>{{$row?->title??""}}</td>
-                            <td>{{$row?->description??""}}</td>
-                            <td>{{$row?->country?->name??""}} / {{$row?->country?->currency_code??""}}</td>
+                            {{-- <td>{{$row?->description??""}}</td> --}}
+                            {{-- <td>{{$row?->country?->name??""}} / {{$row?->country?->currency_code??""}}</td> --}}
                             <td>
                                 <div class="btn-group">
                                 <button

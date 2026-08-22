@@ -43,7 +43,7 @@ class LoginController extends Controller
     {
         $this->middleware('guest')->except('logout');
     }
-    
+
     public function username()
     {
         return 'username';
@@ -51,12 +51,20 @@ class LoginController extends Controller
 
     public function authenticated(Request $request, $user)
     {
-        // dd($user);
         if ($user->is_active != 1) {
             Auth::logout();
-            
+
             return redirect()->route('login')->withErrors('Your account has been locked. Please contact your Boss!');
         }else{
+            if (optional($user->role)->title == 'Super Admin' || optional($user->role)->name == 'superadmin') {
+                if ($user->country) {
+                    session([
+                        'active_country_id'   => $user->country_id,
+                        'active_country_code' => $user->country->currency_code,
+                        'active_country_name' => $user->country->name
+                    ]);
+                }
+            }
             return redirect()->route('home')->withSuccess('Successfully Login');
         }
     }

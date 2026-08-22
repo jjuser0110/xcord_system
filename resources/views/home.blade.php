@@ -151,16 +151,35 @@
                 <div class="card-body">
                     <div class="row">
                         @forelse($bankSettings as $bankSetting)
+                            @php
+                                $bgColor = strtolower(trim($bankSetting->color ?? '#696cff'));
+
+                                // Define common light background keywords or hex codes
+                                $lightColors = ['white', '#ffffff', '#fff', '#f8f9fa', '#e9ecef', '#d1e7dd', '#fff3cd', '#f8d7da', '#cff4fc'];
+
+                                // Check if it's explicitly in our list, or starts with a light hex code pattern (rough brightness check or direct match)
+                                $isLightBg = in_array($bgColor, $lightColors) || str_starts_with($bgColor, '#f') || str_starts_with($bgColor, '#e');
+                            @endphp
                             <div class="col-md-4 col-sm-6 mb-3">
-                                <div class="card text-white p-3 h-100 shadow-sm" style="background-color: {{ $bankSetting->color ?? '#696cff' }};">
+                                <div class="card p-3 h-100 shadow-sm {{ $isLightBg ? 'text-dark border' : 'text-white' }}" style="background-color: {{ $bankSetting->color ?? '#696cff' }};">
                                     <div class="d-flex justify-content-between align-items-center mb-2">
-                                        <h6 class="text-white mb-0 fw-bold">{{ $bankSetting->bank->bank_name ?? 'Bank' }}</h6>
-                                        <small class="badge bg-dark bg-opacity-25">{{ $bankSetting->account_no }}</small>
+                                        <h6 class="mb-0 fw-bold {{ $isLightBg ? 'text-dark' : 'text-white' }}">
+                                            {{ $bankSetting->bank->bank_name ?? 'Bank' }}
+                                        </h6>
+                                        <small class="badge {{ $isLightBg ? 'bg-secondary text-white' : 'bg-dark bg-opacity-25 text-white' }}">
+                                            {{ $bankSetting->account_no }}
+                                        </small>
                                     </div>
-                                    <p class="mb-2 text-white-50 small">{{ $bankSetting->holder_name ?? '' }}</p>
-                                    <div class="mt-auto pt-2 border-top border-light border-opacity-25">
-                                        <small class="text-white-50 d-block">Current Capital</small>
-                                        <h3 class="text-white mb-0 fw-semibold">{{ number_format($bankSetting->capital, 2) }}</h3>
+
+                                    <p class="mb-2 small {{ $isLightBg ? 'text-muted' : 'text-white-50' }}">
+                                        {{ $bankSetting->holder_name ?? '' }}
+                                    </p>
+
+                                    <div class="mt-auto pt-2 border-top {{ $isLightBg ? 'border-secondary border-opacity-25' : 'border-light border-opacity-25' }}">
+                                        <small class="{{ $isLightBg ? 'text-muted' : 'text-white-50' }} d-block">Current Capital</small>
+                                        <h3 class="mb-0 fw-semibold {{ $isLightBg ? 'text-dark' : 'text-white' }}">
+                                            {{ number_format($bankSetting->capital, 2) }}
+                                        </h3>
                                     </div>
                                 </div>
                             </div>
@@ -169,6 +188,44 @@
                                 No bank settings found.
                             </div>
                         @endforelse
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title m-0">Midnight Bank Capital Snapshots ({{ now()->format('d M Y') }})</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>Bank Name</th>
+                                    <th>Account No</th>
+                                    <th>Recorded Capital</th>
+                                    <th>Snapshot Date</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @forelse($dailySnapshots as $snapshot)
+                                    <tr>
+                                        <td>{{ optional($snapshot->bankSetting->bank)->bank_name ?? 'N/A' }}</td>
+                                        <td>{{ optional($snapshot->bankSetting)->account_no ?? 'N/A' }}</td>
+                                        <td>{{ number_format($snapshot->capital, 2) }}</td>
+                                        <td>{{ $snapshot->snapshot_date }}</td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="4" class="text-center text-muted">No snapshots recorded for today yet.</td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>

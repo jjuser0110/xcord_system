@@ -56,7 +56,7 @@
                     @if(!isset($user)) required @endif/>
                 </div>
 
-                <div class="col-md-6">
+                {{-- <div class="col-md-6">
                     <label class="form-label" for="role_id">Role</label>
                     <select name="role_id" id="role_id" class="form-select" required>
                         <option value="" disabled selected>Select Role</option>
@@ -67,11 +67,17 @@
                             </option>
                         @endforeach
                     </select>
+                </div> --}}
+
+                <div class="col-md-6">
+                    <label class="form-label" for="role_name">Role</label>
+                    <input type="text" class="form-control" value="Company Staff" readonly disabled />
+                    <input type="hidden" name="role_id" value="{{ $companyStaffRole->id ?? '' }}" />
                 </div>
 
                 <div class="col-md-6">
                     <label class="form-label" for="country_id">Country</label>
-                    <select name="country_id" id="country_id" class="form-select" required>
+                    <select name="country_id" id="country_id" class="form-select" required @if(isset($disableCountry) && $disableCountry) disabled @endif>
                         <option value="" disabled selected>Select Country</option>
                         @foreach($countries as $country)
                             <option value="{{ $country->id }}"
@@ -80,6 +86,11 @@
                             </option>
                         @endforeach
                     </select>
+
+                    {{-- Ensure the value is still submitted since disabled selects are ignored by forms --}}
+                    @if(isset($disableCountry) && $disableCountry)
+                        <input type="hidden" name="country_id" value="{{ $user->country_id ?? '' }}">
+                    @endif
                 </div>
 
                 <hr>

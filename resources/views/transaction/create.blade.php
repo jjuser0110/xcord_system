@@ -31,7 +31,9 @@
                     <select name="bank_setting_id" id="bank_setting_id" class="form-select">
                         <option value="" disabled selected>Select Bank Account</option>
                         @foreach($bankSettings as $bank)
-                            <option value="{{ $bank->id }}">{{ $bank->bank->bank_name }} - {{ $bank->account_no }} ({{ $bank->type }})</option>
+                            <option value="{{ $bank->id }}">
+                                {{ $bank->bank->bank_name ?? '' }} - {{ $bank->account_no }} ({{ $bank->type }}) — Balance: {{ number_format($bank->current_balance, 2) }}
+                            </option>
                         @endforeach
                     </select>
                 </div>
@@ -69,7 +71,9 @@
                     <select name="source_bank_id" id="source_bank_id" class="form-select border-danger">
                         <option value="" disabled selected>Select Source Bank Acc</option>
                         @foreach($bankSettings as $bank)
-                            <option value="{{ $bank->id }}">{{ $bank->bank->bank_name }} - {{ $bank->account_no }} ({{ $bank->type }})</option>
+                            <option value="{{ $bank->id }}">
+                                {{ $bank->bank->bank_name ?? '' }} - {{ $bank->account_no }} ({{ $bank->type }}) — Balance: {{ number_format($bank->current_balance, 2) }}
+                            </option>
                         @endforeach
                     </select>
                 </div>
@@ -79,7 +83,9 @@
                     <select name="target_bank_id" id="target_bank_id" class="form-select border-success">
                         <option value="" disabled selected>Select Target Bank Acc</option>
                         @foreach($bankSettings as $bank)
-                            <option value="{{ $bank->id }}">{{ $bank->bank->bank_name }} - {{ $bank->account_no }} ({{ $bank->type }})</option>
+                            <option value="{{ $bank->id }}">
+                                {{ $bank->bank->bank_name ?? '' }} - {{ $bank->account_no }} ({{ $bank->type }}) — Balance: {{ number_format($bank->current_balance, 2) }}
+                            </option>
                         @endforeach
                     </select>
                 </div>
@@ -102,7 +108,7 @@
                 </div>
 
                 <!-- Color Palette Picker -->
-                <div class="col-12">
+                {{-- <div class="col-12">
                     <label class="form-label d-block fw-semibold">Row Highlight Color Status</label>
                     <div class="d-flex flex-wrap gap-2 pt-1">
                         @php
@@ -127,7 +133,7 @@
                             </label>
                         @endforeach
                     </div>
-                </div>
+                </div> --}}
 
                 <!-- Remarks (Textareas) -->
                 <div class="col-md-6">

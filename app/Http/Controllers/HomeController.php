@@ -5,11 +5,15 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Transaction;
 use App\Models\BankSetting;
+use App\Models\BankSnapshot;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
+use App\Traits\CountryScopeTrait;
 
 class HomeController extends Controller
 {
+    use CountryScopeTrait;
+
     public function __construct()
     {
         $this->middleware('auth');
@@ -17,43 +21,48 @@ class HomeController extends Controller
 
     public function index()
     {
-        $countryId = Auth::user()->country_id;
         $today = Carbon::today();
         $currentMonth = Carbon::now()->format('Y-m');
 
-        $todayTransferToOwn = Transaction::where('country_id', $countryId)
-            ->whereDate('transaction_date', $today)
+        $todayTransferToOwnQuery = Transaction::whereDate('transaction_date', $today)
             ->where('type', 'own')
-            ->where('transfer_direction', '-')
-            ->sum('amount');
+            ->where('transfer_direction', '-');
+        $this->scopeByCountry($todayTransferToOwnQuery);
+        $todayTransferToOwn = $todayTransferToOwnQuery->sum('amount');
 
-        $todayReceiveFromOwn = Transaction::where('country_id', $countryId)
-            ->whereDate('transaction_date', $today)
+        $todayReceiveFromOwnQuery = Transaction::whereDate('transaction_date', $today)
             ->where('type', 'own')
-            ->where('transfer_direction', '+')
-            ->sum('amount');
+            ->where('transfer_direction', '+');
+        $this->scopeByCountry($todayReceiveFromOwnQuery);
+        $todayReceiveFromOwn = $todayReceiveFromOwnQuery->sum('amount');
 
-        $todayTransferToCustomer = Transaction::where('country_id', $countryId)
-            ->whereDate('transaction_date', $today)
+        $todayTransferToCustomerQuery = Transaction::whereDate('transaction_date', $today)
             ->where('type', 'customer')
-            ->where('transfer_direction', '-')
-            ->sum('amount');
+            ->where('transfer_direction', '-');
+        $this->scopeByCountry($todayTransferToCustomerQuery);
+        $todayTransferToCustomer = $todayTransferToCustomerQuery->sum('amount');
 
-        $todayReceiveFromCustomer = Transaction::where('country_id', $countryId)
-            ->whereDate('transaction_date', $today)
+        $todayReceiveFromCustomerQuery = Transaction::whereDate('transaction_date', $today)
             ->where('type', 'customer')
-            ->where('transfer_direction', '+')
-            ->sum('amount');
+            ->where('transfer_direction', '+');
+        $this->scopeByCountry($todayReceiveFromCustomerQuery);
+        $todayReceiveFromCustomer = $todayReceiveFromCustomerQuery->sum('amount');
 
-        $bankSettings = BankSetting::with('bank')
-            ->where('country_id', $countryId)
-            ->get();
+        $bankSettingsQuery = BankSetting::with('bank');
+        $this->scopeByCountry($bankSettingsQuery);
+        $bankSettings = $bankSettingsQuery->get();
 
         $totalSystemCapital = $bankSettings->sum('capital');
 
-        $monthlyVolume = Transaction::where('country_id', $countryId)
-            ->where('closing_month', $currentMonth)
-            ->sum('amount');
+        $monthlyVolumeQuery = Transaction::where('closing_month', $currentMonth);
+        $this->scopeByCountry($monthlyVolumeQuery);
+        $monthlyVolume = $monthlyVolumeQuery->sum('amount');
+
+        $currentDate = Carbon::today()->toDateString();
+        $dailySnapshotsQuery = BankSnapshot::with('bankSetting.bank')
+            ->where('snapshot_date', $currentDate);
+        $this->scopeByCountry($dailySnapshotsQuery);
+        $dailySnapshots = $dailySnapshotsQuery->get();
 
         return view('home', compact(
             'todayTransferToOwn',
@@ -62,7 +71,8 @@ class HomeController extends Controller
             'todayReceiveFromCustomer',
             'bankSettings',
             'totalSystemCapital',
-            'monthlyVolume'
+            'monthlyVolume',
+            'dailySnapshots'
         ));
     }
 }

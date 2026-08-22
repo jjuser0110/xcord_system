@@ -10,10 +10,13 @@ class BankSnapshot extends Model
     use HasFactory;
 
     protected $fillable = [
+        'country_id',
         'bank_setting_id',
         'capital',
-        'snapshot_date',
+        'snapshot_date'
     ];
+
+
 
     public function bankSetting()
     {

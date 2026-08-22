@@ -4,25 +4,35 @@ namespace App\Http\Controllers;
 
 use App\Models\Country;
 use App\Models\User;
+use App\Traits\CountryScopeTrait;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Bouncer;
 use Illuminate\Support\Facades\Auth;
 
+// TODO
 class UserController extends Controller
 {
+    use CountryScopeTrait;
     public function index()
     {
-        // TODO: Client decides where conditions
-        $users = User::with('country')->latest()->get();
+        $query = User::with('country')->whereHas('role', function ($q) {
+                    $q->where('name', 'company_staff');
+                });
+        $this->scopeByCountry($query);
+        $users = $query->latest()->get();
+
         return view('user.index')->with('users', $users);
     }
 
     public function create()
     {
-        $countries = Country::where('is_active', 1)->get();
-        $roles = Bouncer::role()->pluck('title', 'id');
-        return view('user.create', compact('countries', 'roles'));
+        $query = Country::where('is_active', 1);
+        $this->scopeByCountry($query, 'id');
+        $countries = $query->get();
+        $companyStaffRole = Bouncer::role()->where('name', 'company_staff')->first();
+
+        return view('user.create', compact('countries', 'companyStaffRole'));
     }
 
     public function store(Request $request)
@@ -36,7 +46,7 @@ class UserController extends Controller
             'country_id' => 'required|exists:countries,id',
         ]);
 
-        User::create([
+        $user = User::create([
             'name'       => $validated['name'],
             'username'   => $validated['username'],
             'email'      => $validated['email'] ?? null,
@@ -46,6 +56,11 @@ class UserController extends Controller
             'is_active'  => 1,
             'is_banned'  => 0,
         ]);
+
+        $role = Bouncer::role()->find($validated['role_id']);
+        if ($role) {
+            $user->assign($role);
+        }
 
         return redirect()->route('user.index')->withSuccess('User created successfully.');
     }
@@ -57,9 +72,13 @@ class UserController extends Controller
 
     public function edit(User $user)
     {
-        $countries = Country::where('is_active', 1)->get();
-        $roles = Bouncer::role()->pluck('title', 'id');
-        return view('user.create', compact('user', 'countries', 'roles'));
+        $query = Country::where('is_active', 1);
+        $this->scopeByCountry($query, 'id');
+        $countries = $query->get();
+        $companyStaffRole = Bouncer::role()->where('name', 'company_staff')->first();
+        $disableCountry = true;
+
+        return view('user.create', compact('user', 'countries', 'companyStaffRole', 'disableCountry'));
     }
 
     public function update(Request $request, User $user)
@@ -89,7 +108,9 @@ class UserController extends Controller
 
         $user->retract($user->getRoles());
         $role = Bouncer::role()->find($request->role_id);
-        $user->assign($role);
+        if ($role) {
+            $user->assign($role);
+        }
 
         return redirect()->route('user.index')->withSuccess('User updated successfully.');
     }

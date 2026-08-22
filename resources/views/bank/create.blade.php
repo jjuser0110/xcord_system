@@ -35,7 +35,7 @@
                 </div>
                 <div class="col-md-6">
                     <label class="form-label" for="country_id">Country</label>
-                    <select name="country_id" id="country_id" class="form-select" required>
+                    <select name="country_id" id="country_id" class="form-select" required @if(isset($disableCountry) && $disableCountry) disabled @endif>
                         <option value="" disabled selected>Select Country</option>
                         @foreach($countries as $country)
                             <option value="{{ $country->id }}"
@@ -44,6 +44,11 @@
                             </option>
                         @endforeach
                     </select>
+
+                    {{-- If disabled, include a hidden input so the value is still passed on form submit --}}
+                    @if(isset($disableCountry) && $disableCountry)
+                        <input type="hidden" name="country_id" value="{{ $bank->country_id ?? '' }}">
+                    @endif
                 </div>
                 <hr>
                 <div class="col-12">

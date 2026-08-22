@@ -26,6 +26,11 @@ class BankSetting extends Model
         'country_id'
     ];
 
+    protected $appends = [
+        'current_balance',
+    ];
+
+
     public function country()
     {
         return $this->belongsTo(Country::class);
@@ -41,23 +46,12 @@ class BankSetting extends Model
         return $this->belongsTo('App\Models\User','created_by_id');
     }
 
-    // public function deposit_transaction()
-    // {
-    //     return $this->hasMany('App\Models\BankInDepositTransaction');
-    // }
+    public function getCurrentBalanceAttribute()
+    {
+        $latestLog = BankLog::where('bank_setting_id', $this->id)
+                        ->latest('id')
+                        ->first();
 
-    // public function withdraw_transaction()
-    // {
-    //     return $this->hasMany('App\Models\WithdrawTransaction');
-    // }
-
-    // public function bank_logs()
-    // {
-    //     return $this->morphMany('App\Models\BankLog', 'content');
-    // }
-
-    // public function all_bank_logs()
-    // {
-    //     return $this->hasMany('App\Models\BankLog', 'bank_setting_id');
-    // }
+        return $latestLog ? $latestLog->end_balance : ($this->capital ?? 0);
+    }
 }

@@ -10,4 +10,5 @@ Route::prefix('/country')->as('country.')->middleware(['auth'])->group(function(
     Route::get('/edit/{country}', 'CountryController@edit')->name('edit');
     Route::post('/update/{country}', 'CountryController@update')->name('update');
     Route::get('/destroy/{country}', 'CountryController@destroy')->name('destroy');
+    Route::get('/switch/{id}', 'CountryController@switch')->name('switch');
 });

@@ -7,24 +7,30 @@ use Spatie\Browsershot\Browsershot;
 use Illuminate\Http\Request;
 use App\Models\Bank;
 use App\Models\Country;
+use App\Traits\CountryScopeTrait;
 use Bouncer;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth;
 
+// Master setting (open for superadmin only) TODO
 class BankController extends Controller
 {
+    use CountryScopeTrait;
     public function index(Request $request)
     {
-        // TODO: Client decides where conditions
-        $bank = Bank::with('country')->latest()->get();
 
+        $query = Bank::with('country');
+        $this->scopeByCountry($query);
+        $bank = $query->latest()->get();
         return view('bank.index')->with('bank',$bank);
     }
 
     public function create()
     {
-        $countries = Country::where('is_active', 1)->get();
+        $query = Country::where('is_active', 1);
+        $this->scopeByCountry($query, 'id');
+        $countries = $query->get();
         return view('bank.create', compact('countries'));
     }
 
@@ -48,8 +54,12 @@ class BankController extends Controller
 
     public function edit(Bank $bank)
     {
-        $countries = Country::where('is_active', 1)->get();
-        return view('bank.create', compact('bank', 'countries'));
+        $query = Country::where('is_active', 1);
+        $this->scopeByCountry($query, 'id');
+        $countries = $query->get();
+
+        $disableCountry = true;
+        return view('bank.create', compact('bank', 'countries', 'disableCountry'));
     }
 
     public function update(Request $request, Bank $bank)

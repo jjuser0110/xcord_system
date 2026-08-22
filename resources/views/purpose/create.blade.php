@@ -23,7 +23,7 @@
                     value="{{$purpose->title??''}}"
                     required/>
                 </div>
-                <div class="col-md-6">
+                {{-- <div class="col-md-6">
                     <label class="form-label" for="country_id">Country</label>
                     <select name="country_id" id="country_id" class="form-select" required>
                         <option value="" disabled selected>Select Country</option>
@@ -34,8 +34,9 @@
                             </option>
                         @endforeach
                     </select>
-                </div>
-                <div class="col-12">
+                </div> --}}
+
+                {{-- <div class="col-12">
                     <label class="form-label" for="description">Description</label>
                     <textarea
                     class="form-control"
@@ -43,7 +44,7 @@
                     name="description"
                     rows="4"
                     required>{{$purpose->description??''}}</textarea>
-                </div>
+                </div> --}}
                 <hr>
                 <div class="col-12">
                     <button type="submit" name="submitButton" class="btn btn-primary">Submit</button>

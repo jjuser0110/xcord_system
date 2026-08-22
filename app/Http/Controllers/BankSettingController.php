@@ -9,23 +9,32 @@ use App\Models\Bank;
 use App\Models\BankLog;
 use App\Models\Country;
 use Illuminate\Support\Facades\Auth;
+use App\Traits\CountryScopeTrait;
 
+// Setting open for all system users TODO
 class BankSettingController extends Controller
 {
+    use CountryScopeTrait;
+
     public function index(Request $request)
     {
-        $countryId = Auth::user()->country_id;
-        $bank_settings = BankSetting::with(['bank', 'country', 'created_by'])
-                        ->where('country_id', $countryId)
-                        ->latest()->get();
+        $query = BankSetting::with(['bank', 'country', 'created_by']);
+        $this->scopeByCountry($query);
+        $bank_settings = $query->latest()->get();
+
         return view('bank_setting.index', compact('bank_settings'));
     }
 
     public function create()
     {
-        $countryId = Auth::user()->country_id;
-        $banks = Bank::with('country')->where('country_id', $countryId)->get();
-        $countries = Country::where('is_active', 1)->get();
+        $query = Bank::with('country');
+        $this->scopeByCountry($query);
+        $banks = $query->get();
+
+        $query = Country::where('is_active', 1);
+        $this->scopeByCountry($query, 'id');
+        $countries = $query->get();
+
         return view('bank_setting.create', compact('banks', 'countries'));
     }
 
@@ -51,7 +60,7 @@ class BankSettingController extends Controller
             'capital'       => $validated['capital'],
             'phone_number'  => $validated['phone_number'] ?? null,
             'expired_date'  => $validated['expired_date'] ?? null,
-            'color'         => $validated['color'],
+            'color'         => $validated['color'] ?? null,
             'type'          => $validated['type'] ?? null,
             'created_by_id' => Auth::id(),
             'is_active'     => 1,
@@ -62,9 +71,14 @@ class BankSettingController extends Controller
 
     public function edit(BankSetting $bank_setting)
     {
-        $countryId = Auth::user()->country_id;
-        $banks = Bank::with('country')->where('country_id', $countryId)->get();
-        $countries = Country::where('is_active', 1)->get();
+        $query = Bank::with('country');
+        $this->scopeByCountry($query);
+        $banks = $query->get();
+
+        $query = Country::where('is_active', 1);
+        $this->scopeByCountry($query, 'id');
+        $countries = $query->get();
+
         return view('bank_setting.create', compact('bank_setting', 'banks', 'countries'));
     }
 

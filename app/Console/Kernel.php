@@ -21,22 +21,7 @@ class Kernel extends ConsoleKernel
 
     protected function schedule(Schedule $schedule)
     {
-        $schedule->call(function () {
-        $bankSettings = \App\Models\BankSetting::all();
-        $today = \Carbon\Carbon::today();
-
-        foreach ($bankSettings as $setting) {
-                \App\Models\BankSnapshot::updateOrCreate(
-                    [
-                        'bank_setting_id' => $setting->id,
-                        'snapshot_date' => $today,
-                    ],
-                    [
-                        'capital' => $setting->capital,
-                    ]
-                );
-            }
-        })->dailyAt('00:00');
+        $schedule->command('banks:calculate-daily')->dailyAt('00:00');
     }
 
     /**

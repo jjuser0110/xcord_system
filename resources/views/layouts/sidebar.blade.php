@@ -111,7 +111,7 @@ $isTransaction = Str::is('transaction.*', $currentRoute);
                 </li>
                 <li class="menu-item {{ request()->routeIs('user.*') ? 'active' : '' }}">
                     <a href="{{ route('user.index') }}" class="menu-link">
-                        <div data-i18n="User">User</div>
+                        <div data-i18n="Company Staff">Company Staff</div>
                     </a>
                 </li>
             </ul>

@@ -21,6 +21,59 @@
                 <!-- /Search -->
 
                 <ul class="navbar-nav flex-row align-items-center ms-auto">
+                  <!-- Country Switcher / Display -->
+                  <li class="nav-item {{ (optional(Auth::user()->role)->title == 'Super Admin' || (optional(Auth::user()->role)->name == 'superadmin')) ? 'dropdown' : '' }} me-2 me-xl-0">
+                    @if(optional(Auth::user()->role)->title == 'Super Admin' || (optional(Auth::user()->role)->name == 'superadmin'))
+                    <!-- Superadmin: Interactive Dropdown Switcher -->
+                    <a class="nav-link dropdown-toggle hide-arrow d-flex align-items-center" href="javascript:void(0);" data-bs-toggle="dropdown">
+                        <span class="badge bg-label-primary p-1 me-1">
+                        <i class="bx bx-globe fs-5"></i>
+                        </span>
+                        <span class="align-middle fw-semibold d-none d-lg-inline-block">
+                        {{ session('active_country_code', Auth::user()->country->currency_code ?? 'Select') }}
+                        </span>
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end shadow-sm">
+                        <li class="dropdown-header text-uppercase small text-muted">Switch Country View</li>
+                        <li><div class="dropdown-divider my-1"></div></li>
+
+                        <!-- "See All" Option for Super Admin -->
+                        <li>
+                        <a class="dropdown-item d-flex justify-content-between align-items-center {{ (session('active_country_id') === 'no') ? 'active' : '' }}"
+                            href="{{ route('country.switch', 'no') }}">
+                            <span class="align-middle fw-bold">See All (All Countries)</span>
+                            <span class="badge bg-secondary text-white ms-2">ALL</span>
+                        </a>
+                        </li>
+                        <li><div class="dropdown-divider my-1"></div></li>
+
+                        @php
+                            $availableCountries = \App\Models\Country::where('is_active', 1)->get();
+                        @endphp
+
+                        @foreach($availableCountries as $country)
+                        <li>
+                            <a class="dropdown-item d-flex justify-content-between align-items-center {{ (session('active_country_id') == $country->id) ? 'active' : '' }}"
+                            href="{{ route('country.switch', $country->id) }}">
+                            <span class="align-middle">{{ $country->name }}</span>
+                            <span class="badge bg-light text-dark ms-2">{{ $country->currency_code }}</span>
+                            </a>
+                        </li>
+                        @endforeach
+                    </ul>
+                    @else
+                    <!-- Regular User: Read-only Static View -->
+                    <a class="nav-link d-flex align-items-center" href="javascript:void(0);" title="Assigned Country">
+                        <span class="badge bg-label-secondary p-1 me-1">
+                        <i class="bx bx-map-pin fs-5"></i>
+                        </span>
+                        <span class="align-middle d-none d-lg-inline-block text-muted">
+                        {{ Auth::user()->country->currency_code ?? 'N/A' }}
+                        </span>
+                    </a>
+                    @endif
+                </li>
+                  <!-- /Country Switcher / Display -->
                   <!-- Language -->
                   <li class="nav-item dropdown-language dropdown me-2 me-xl-0">
                     <a class="nav-link dropdown-toggle hide-arrow" href="javascript:void(0);" data-bs-toggle="dropdown">
