@@ -11,11 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('daily_bank_snapshots', function (Blueprint $table) {
+        Schema::create('bank_snapshots', function (Blueprint $table) {
             $table->id();
             $table->foreignId('country_id')->constrained('countries')->cascadeOnDelete();
             $table->foreignId('bank_setting_id')->constrained('bank_settings')->cascadeOnDelete();
-            $table->decimal('capital', 15, 2);
+            $table->decimal('capital', 15, 2)->default(0);
             $table->date('snapshot_date');
             $table->timestamps();
 

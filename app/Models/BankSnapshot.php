@@ -10,6 +10,7 @@ class BankSnapshot extends Model
     use HasFactory;
 
     protected $fillable = [
+        'id',
         'country_id',
         'bank_setting_id',
         'capital',

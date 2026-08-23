@@ -17,11 +17,12 @@ class Kernel extends ConsoleKernel
     protected $commands = [
         //
 	   'App\Console\Commands\DoClosings',
+       'App\Console\Commands\CalculateDailyBanks',
     ];
 
     protected function schedule(Schedule $schedule)
     {
-        $schedule->command('banks:calculate-daily')->dailyAt('00:00');
+        $schedule->command('app:calculate-daily-banks')->dailyAt('00:00');
     }
 
     /**
