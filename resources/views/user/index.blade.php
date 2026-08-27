@@ -3,13 +3,13 @@
     <!-- Content -->
 
     <div class="container-xxl flex-grow-1 container-p-y">
-        <h4 class="py-3 breadcrumb-wrapper mb-4"><span class="text-muted fw-light">User </span></h4>
+        <h4 class="py-3 breadcrumb-wrapper mb-4"><span class="text-muted fw-light">Company Staff </span></h4>
 
         <!-- DataTable with Buttons -->
         <div class="card">
             <div class="card-header flex-column flex-md-row">
                 <div class="head-label">
-                    <h5 class="card-title mb-0">User Listing</h5>
+                    <h5 class="card-title mb-0">Company Staff Listing</h5>
                 </div>
                 <div class="dt-action-buttons text-end pt-3 pt-md-0">
                     <div class="dt-buttons">
@@ -25,10 +25,10 @@
                 <table class="dt-column-search table table-bordered" id="mytable">
                     <thead>
                         <tr>
-                            <th>Name</th>
+                            {{-- <th>Name</th> --}}
+                            {{-- <th>Email</th> --}}
+                            {{-- <th>Role</th> --}}
                             <th>UserName</th>
-                            <th>Email</th>
-                            <th>Role</th>
                             <th>Country/Currency</th>
                             <th>Action</th>
                         </tr>
@@ -36,25 +36,20 @@
                     <tbody>
                         @foreach($users as $row)
                         <tr>
-                            <td>{{$row?->name??""}}</td>
+                            {{-- <td>{{$row?->name??""}}</td> --}}
+                            {{-- <td>{{$row?->email??""}}</td> --}}
+                            {{-- <td>{{$row?->role?->title??""}}</td> --}}
                             <td>{{$row?->username??""}}</td>
-                            <td>{{$row?->email??""}}</td>
-                            <td>{{$row?->role?->title??""}}</td>
                             <td>{{$row?->country?->name??""}} / {{$row->country?->currency_code??""}}</td>
                             <td>
-                                <div class="btn-group">
-                                <button
-                                    type="button"
-                                    class="btn btn-primary btn-sm dropdown-toggle"
-                                    data-bs-toggle="dropdown"
-                                    aria-expanded="false">
-                                    Action
-                                </button>
-                                <ul class="dropdown-menu">
-                                    <li><a class="dropdown-item" href="{{ route('user.edit',$row) }}" onclick="showLoading()">Edit</a></li>
-                                    <li><a class="dropdown-item" style="color:red;cursor:pointer" onclick="if(confirm('Are you sure you want to delete?')){showLoading();window.location.href='{{ route('user.destroy',$row) }}'}">Delete</a></li>
-                                    <li>
-                                </ul>
+                                <div class="d-inline-block text-nowrap">
+                                    <a href="{{ route('user.edit', $row) }}" class="btn btn-sm btn-icon item-edit me-4" onclick="showLoading()" title="Edit">
+                                        <i class="bx bx-edit-alt"></i>Edit
+                                    </a>
+
+                                    <button type="button" class="btn btn-sm btn-icon item-delete" style="color: red;" onclick="if(confirm('Are you sure you want to delete?')){showLoading();window.location.href='{{ route('user.destroy', $row) }}'}" title="Delete">
+                                        <i class="bx bx-trash"></i>Delete
+                                    </button>
                                 </div>
                             </td>
                         </tr>

@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Bouncer;
 
 class Role extends Model
 {
@@ -13,4 +14,11 @@ class Role extends Model
         'title',
         'scope',
     ];
+
+    public static function getCompanyStaffRoleId()
+    {
+        $role = Bouncer::role()->where('name', 'company_staff')->first();
+
+        return $role ? $role->id : null;
+    }
 }

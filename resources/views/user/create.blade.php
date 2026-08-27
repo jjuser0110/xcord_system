@@ -3,18 +3,18 @@
 @section('content')
 <div class="container-xxl flex-grow-1 container-p-y">
     <h4 class="py-3 breadcrumb-wrapper mb-4">
-        <a class="text-muted fw-light" href="{{route('user.index')}}">User /</a>
+        <a class="text-muted fw-light" href="{{route('user.index')}}">Company Staff /</a>
          @if (isset($user)) Edit @else Create @endif
     </h4>
     <div class="row">
         <div class="col-12">
             <div class="card">
-            <h5 class="card-header">User Details</h5>
+            <h5 class="card-header">Company Staff Details</h5>
             <div class="card-body">
                 <form class="row g-3" enctype="multipart/form-data" @if (isset($user)) method="post" action="{{ route('user.update',$user) }}" @else method="post" action="{{ route('user.store') }}" @endif onsubmit="showLoading()">
                 @csrf
 
-                <div class="col-md-6">
+                {{-- <div class="col-md-6">
                     <label class="form-label" for="name">Name</label>
                     <input
                     type="text"
@@ -23,7 +23,7 @@
                     name="name"
                     value="{{$user->name??''}}"
                     required/>
-                </div>
+                </div> --}}
 
                 <div class="col-md-6">
                     <label class="form-label" for="username">Username</label>
@@ -36,7 +36,7 @@
                     required/>
                 </div>
 
-                <div class="col-md-6">
+                {{-- <div class="col-md-6">
                     <label class="form-label" for="email">Email</label>
                     <input
                     type="email"
@@ -44,7 +44,7 @@
                     placeholder="john@example.com"
                     name="email"
                     value="{{$user->email??''}}"/>
-                </div>
+                </div> --}}
 
                 <div class="col-md-6">
                     <label class="form-label" for="password">Password @if(isset($user)) <small class="text-muted">(Leave blank to keep current)</small> @endif</label>
@@ -69,27 +69,26 @@
                     </select>
                 </div> --}}
 
-                <div class="col-md-6">
+                {{-- <div class="col-md-6">
                     <label class="form-label" for="role_name">Role</label>
                     <input type="text" class="form-control" value="Company Staff" readonly disabled />
                     <input type="hidden" name="role_id" value="{{ $companyStaffRole->id ?? '' }}" />
-                </div>
+                </div> --}}
 
                 <div class="col-md-6">
                     <label class="form-label" for="country_id">Country</label>
                     <select name="country_id" id="country_id" class="form-select" required @if(isset($disableCountry) && $disableCountry) disabled @endif>
-                        <option value="" disabled selected>Select Country</option>
+                        <option value="" disabled {{ !isset($user) && !isset($disableCountry) ? 'selected' : '' }}>Select Country</option>
                         @foreach($countries as $country)
                             <option value="{{ $country->id }}"
-                                {{ (isset($user) && $user->country_id == $country->id) ? 'selected' : '' }}>
+                                {{ ((isset($user) && $user->country_id == $country->id) || (isset($disableCountry) && $disableCountry)) ? 'selected' : '' }}>
                                 {{ $country->name }}
                             </option>
                         @endforeach
                     </select>
 
-                    {{-- Ensure the value is still submitted since disabled selects are ignored by forms --}}
                     @if(isset($disableCountry) && $disableCountry)
-                        <input type="hidden" name="country_id" value="{{ $user->country_id ?? '' }}">
+                        <input type="hidden" name="country_id" value="{{ $countries->first()->id ?? '' }}">
                     @endif
                 </div>
 
