@@ -73,14 +73,6 @@ class CountryController extends Controller
             abort(403, 'Unauthorized action.');
         }
 
-        $previousUrl = strtok(url()->previous(), '?');
-
-        // Block switching if they are on a create or edit page
-        if (str_contains($previousUrl, '/create') || str_contains($previousUrl, '/edit')) {
-            return redirect()->to($previousUrl)
-                ->with('error', 'You cannot switch countries while filling out a form.');
-        }
-
         // Handle "See All" selection
         if ($id === 'no') {
             session([
@@ -89,8 +81,7 @@ class CountryController extends Controller
                 'active_country_name' => 'All Countries'
             ]);
 
-            return redirect()->to($previousUrl . '?country=ALL')
-                ->with('success', 'Switched context to All Countries');
+            return redirect()->route('home', ['country' => 'ALL'])->with('success', 'Switched context to All Countries');
         }
 
         // Handle normal country switch
@@ -102,7 +93,6 @@ class CountryController extends Controller
             'active_country_name' => $country->name
         ]);
 
-        return redirect()->to($previousUrl . '?country=' . $country->currency_code)
-            ->with('success', 'Switched context to ' . $country->name);
+        return redirect()->route('home', ['country' => $country->currency_code])->with('success', 'Switched context to ' . $country->name);
     }
 }
