@@ -26,8 +26,8 @@
                     <thead>
                         <tr>
                             <th>Purpose Title</th>
-                            {{-- <th>Description</th>
-                            <th>Country/Currency</th> --}}
+                            {{-- <th>Description</th> --}}
+                            <th>Country/Currency</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
@@ -36,23 +36,19 @@
                         <tr>
                             <td>{{$row?->title??""}}</td>
                             {{-- <td>{{$row?->description??""}}</td> --}}
-                            {{-- <td>{{$row?->country?->name??""}} / {{$row?->country?->currency_code??""}}</td> --}}
+                            <td>{{$row?->country?->name??""}} / {{$row?->country?->currency_code??""}}</td>
                             <td>
-                                <div class="btn-group">
-                                <button
-                                    type="button"
-                                    class="btn btn-primary btn-sm dropdown-toggle"
-                                    data-bs-toggle="dropdown"
-                                    aria-expanded="false">
-                                    Action
-                                </button>
-                                <ul class="dropdown-menu">
-                                    <li><a class="dropdown-item" href="{{ route('purpose.edit',$row) }}" onclick="showLoading()">Edit</a></li>
-                                    <li><a class="dropdown-item" style="color:red;cursor:pointer" onclick="if(confirm('Are you sure you want to delete?')){showLoading();window.location.href='{{ route('purpose.destroy',$row) }}'}">Delete</a></li>
-                                    <li>
-                                </ul>
+                                <div class="d-inline-block text-nowrap">
+                                    <a href="{{ route('purpose.edit',$row) }}" class="btn btn-sm btn-icon item-edit me-4" onclick="showLoading()" title="Edit">
+                                        <i class="bx bx-edit-alt"></i>Edit
+                                    </a>
+
+                                    <button type="button" class="btn btn-sm btn-icon item-delete" style="color: red;" onclick="if(confirm('Are you sure you want to delete?')){showLoading();window.location.href='{{ route('purpose.destroy',$row) }}'}" title="Delete">
+                                        <i class="bx bx-trash"></i>Delete
+                                    </button>
                                 </div>
                             </td>
+
                         </tr>
                         @endforeach
                     </tbody>

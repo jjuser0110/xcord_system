@@ -19,6 +19,11 @@ class Bank extends Model
         'is_active'
     ];
 
+    public function setShortNameAttribute($value)
+    {
+        $this->attributes['short_name'] = strtoupper($value);
+    }
+
     /**
      * Relationship: The user who created this bank.
      */
@@ -35,5 +40,12 @@ class Bank extends Model
         return $this->belongsTo(Country::class, 'country_id');
     }
 
+    /**
+     * Relationship: Bank settings belonging to this bank.
+     */
+    public function bankSettings()
+    {
+        return $this->hasMany(BankSetting::class, 'bank_id');
+    }
 
 }

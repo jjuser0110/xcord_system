@@ -2,6 +2,7 @@
 
 namespace App\Traits;
 
+use App\Models\Country;
 use Illuminate\Support\Facades\Auth;
 
 trait CountryScopeTrait
@@ -32,5 +33,23 @@ trait CountryScopeTrait
         }
 
         return $query;
+    }
+
+    public function getScopedCountriesForForm(&$disableCountry)
+    {
+        $activeCountryId = session('active_country_id');
+        $disableCountry = false;
+
+        if ($activeCountryId !== 'no' && !empty($activeCountryId)) {
+            $myrCountry = Country::find($activeCountryId);
+            $countries = $myrCountry ? collect([$myrCountry]) : collect();
+            $disableCountry = true;
+        } else {
+            $query = Country::where('is_active', 1);
+            $this->scopeByCountry($query, 'id');
+            $countries = $query->get();
+        }
+
+        return $countries;
     }
 }

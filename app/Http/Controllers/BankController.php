@@ -28,18 +28,19 @@ class BankController extends Controller
 
     public function create()
     {
-        $query = Country::where('is_active', 1);
-        $this->scopeByCountry($query, 'id');
-        $countries = $query->get();
-        return view('bank.create', compact('countries'));
+        $disableCountry = false;
+        $countries = $this->getScopedCountriesForForm($disableCountry);
+
+        return view('bank.create', compact('countries', 'disableCountry'));
     }
 
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'bank_name' => 'required|string|max:255',
-            'short_name' => 'required|string|max:255',
-            'country_id' => 'required|exists:countries,id'
+            'bank_name' => 'required|string|max:255|unique:banks,bank_name',
+            'short_name' => 'required|string|max:255|unique:banks,short_name',
+            'country_id' => 'required|exists:countries,id',
+
         ]);
 
         Bank::create([
@@ -65,9 +66,10 @@ class BankController extends Controller
     public function update(Request $request, Bank $bank)
     {
         $validated = $request->validate([
-            'bank_name' => 'required|string|max:255',
-            'short_name' => 'required|string|max:255',
+            'bank_name' => 'required|string|max:255|unique:banks,bank_name,' . $bank->id,
+            'short_name' => 'required|string|max:255|unique:banks,short_name,' . $bank->id,
             'country_id' => 'required|exists:countries,id',
+
         ]);
         $bank->update($validated);
         return redirect()->route('bank.index')->withSuccess('Data updated');
@@ -75,9 +77,14 @@ class BankController extends Controller
 
     public function destroy(Bank $bank)
     {
+        if ($bank->bankSettings()->exists()) {
+            return redirect()->route('bank.index')
+                ->with('error', 'Cannot delete this bank because it has linked bank accounts/settings.');
+        }
+
         $bank->delete();
 
-        return redirect()->route('bank.index')->withSuccess('Data deleted');
+        return redirect()->route('bank.index')->withSuccess('Data deleted successfully.');
     }
 
 }

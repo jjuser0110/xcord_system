@@ -13,8 +13,8 @@ return new class extends Migration
     {
         Schema::create('banks', function (Blueprint $table) {
             $table->id();
-            $table->string('bank_name');
-            $table->string('short_name');
+            $table->string('bank_name')->unique();
+            $table->string('short_name')->unique();
             $table->foreignId('country_id')->constrained('countries')->restrictOnDelete();
             $table->foreignId('created_by_id')->nullable()->constrained('users')->restrictOnDelete();
             $table->boolean('is_active')->default(true);

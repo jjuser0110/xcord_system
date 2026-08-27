@@ -28,20 +28,9 @@ class UserController extends Controller
 
     public function create()
     {
-        $activeCountryId = session('active_country_id');
         $disableCountry = false;
+        $countries = $this->getScopedCountriesForForm($disableCountry);
 
-        if ($activeCountryId !== 'no') {
-            $myrCountry = Country::find($activeCountryId);
-            $countries = $myrCountry ? collect([$myrCountry]) : collect();
-            $disableCountry = true;
-
-        } else {
-            $query = Country::where('is_active', 1);
-            $this->scopeByCountry($query, 'id');
-            $countries = $query->get();
-
-        }
         //$companyStaffRole = Bouncer::role()->where('name', 'company_staff')->first();
 
         return view('user.create', compact('countries', 'disableCountry'));

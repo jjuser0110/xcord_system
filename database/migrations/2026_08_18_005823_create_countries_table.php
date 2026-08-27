@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('countries', function (Blueprint $table) {
             $table->id();
             $table->string('name');
-            $table->string('currency_code');
+            $table->string('currency_code')->unique();
             $table->foreignId('created_by_id')->nullable()->constrained('users')->restrictOnDelete();
             $table->boolean('is_active')->default(true);
             $table->timestamps();

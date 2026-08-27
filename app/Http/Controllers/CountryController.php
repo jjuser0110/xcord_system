@@ -2,7 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\BankSetting;
+use App\Models\BankSnapshot;
 use App\Models\Country;
+use App\Models\Purpose;
+use App\Models\Transaction;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -24,7 +28,7 @@ class CountryController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'currency_code' => 'required|string|max:255',
+            'currency_code' => 'required|string|max:255|unique:countries,currency_code',
         ]);
 
         Country::create([
@@ -50,7 +54,7 @@ class CountryController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'currency_code' => 'required|string|max:255',
+            'currency_code' => 'required|string|max:255|unique:countries,currency_code,' . $country->id,
         ]);
 
         $country->update($validated);
@@ -60,9 +64,23 @@ class CountryController extends Controller
 
     public function destroy(Country $country)
     {
+        $hasUsers = $country->users()->exists();
+        $hasBanks = $country->banks()->exists();
+        $hasBankSettings = BankSetting::where('country_id', $country->id)->exists();
+        $hasPurposes = Purpose::where('country_id', $country->id)->exists();
+        $hasTransactions = Transaction::where('country_id', $country->id)->exists();
+        $hasBankSnapshots = BankSnapshot::where('country_id', $country->id)->exists();
+        //$hasBankLogs = \App\Models\BankLog::where('country_id', $country->id)->exists();
+
+        if ($hasUsers || $hasBanks || $hasBankSettings || $hasPurposes || $hasTransactions || $hasBankSnapshots) {
+            return redirect()->route('country.index')
+                ->with('error', 'Cannot delete this country because it has linked records (users, banks, transactions, etc.).');
+        }
+
+        // Proceed with soft delete if no relations exist
         $country->delete();
 
-        return redirect()->route('country.index')->withSuccess('Data deleted');
+        return redirect()->route('country.index')->withSuccess('Data deleted successfully.');
     }
 
     public function switch($id)

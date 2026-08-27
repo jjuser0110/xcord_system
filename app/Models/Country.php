@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -17,6 +18,11 @@ class Country extends Model
         'is_active',
         'created_by_id'
     ];
+
+    public function setCurrencyCodeAttribute($value)
+    {
+        $this->attributes['currency_code'] = strtoupper($value);
+    }
 
     /**
      * Relationship: The user who created this country.
