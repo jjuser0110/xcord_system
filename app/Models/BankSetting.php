@@ -13,23 +13,15 @@ class BankSetting extends Model
 
     protected $fillable = [
         'bank_id',
-        'account_no',
         'owner_name',
         'capital',
-        'phone_number',
-        'expired_date',
+        'amount',
         'color',
-        'type',
         'path',
         'is_active',
         'created_by_id',
         'country_id'
     ];
-
-    protected $appends = [
-        'current_balance',
-    ];
-
 
     public function country()
     {
@@ -38,12 +30,22 @@ class BankSetting extends Model
 
     public function bank()
     {
-        return $this->belongsTo('App\Models\Bank')->withTrashed();
+        return $this->belongsTo(Bank::class)->withTrashed();
+    }
+
+    public function phoneNumbers()
+    {
+        return $this->hasMany(BankPhoneNumber::class, 'bank_setting_id');
     }
 
     public function created_by()
     {
-        return $this->belongsTo('App\Models\User','created_by_id');
+        return $this->belongsTo(User::class, 'created_by_id');
+    }
+
+    public function transactions()
+    {
+        return $this->hasMany(Transaction::class, 'bank_setting_id');
     }
 
     public function getCurrentBalanceAttribute()

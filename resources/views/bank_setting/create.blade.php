@@ -37,119 +37,126 @@
             <a class="text-muted fw-light" href="{{route('bank_setting.index')}}">Bank Account /</a>
             @if (isset($bank_setting)) Edit @else Create @endif
         </h4>
-        @if (isset($bank_setting))
-            <a href="{{ route('bank_setting.log', $bank_setting) }}" class="btn btn-info text-white">
-                <i class="bx bx-history me-1"></i> History Log
-            </a>
-        @endif
     </div>
     <div class="row">
         <div class="col-12">
             <div class="card">
                 <h5 class="card-header">Bank Account Details</h5>
                 <div class="card-body">
-                    <form class="row g-3" enctype="multipart/form-data"
-                          @if (isset($bank_setting))
-                              method="post" action="{{ route('bank_setting.update', $bank_setting) }}"
-                          @else
-                              method="post" action="{{ route('bank_setting.store') }}"
-                          @endif
-                          onsubmit="return validateBankForm()">
+                    <form class="row g-3" method="post"
+                          action="{{ isset($bank_setting) ? route('bank_setting.update', $bank_setting) : route('bank_setting.store') }}">
                     @csrf
 
-                    <!-- Bank Selection -->
+                    <!-- Bank Selection (Locked on Edit) -->
                     <div class="col-md-6">
-                        <label class="form-label" for="bank_id">Bank</label>
-                        <select name="bank_id" id="bank_id" class="form-select" required onchange="updateCountry()">
+                        <label class="form-label">Bank</label>
+                        <select name="bank_id" id="bank_id" class="form-select {{ isset($bank_setting) ? 'bg-light' : '' }}" required
+                                {{ isset($bank_setting) ? 'disabled' : '' }} onchange="updateCountry()">
                             <option value="" disabled selected>Select Bank</option>
                             @foreach($banks as $bank)
-                                <option value="{{ $bank->id }}"
-                                        data-country-id="{{ $bank->country_id ?? '' }}"
+                                <option value="{{ $bank->id }}" data-country-id="{{ $bank->country_id ?? '' }}"
                                     {{ (isset($bank_setting) && $bank_setting->bank_id == $bank->id) ? 'selected' : '' }}>
                                     {{ $bank->bank_name }}
                                 </option>
                             @endforeach
                         </select>
+                        @if(isset($bank_setting))
+                            <input type="hidden" name="bank_id" value="{{ $bank_setting->bank_id }}">
+                        @endif
                     </div>
 
-                    <!-- Country Selection (Disabled so user cannot change it manually; uses hidden input to pass value) -->
+                    <!-- Country Selection (Locked on Edit) -->
                     <div class="col-md-6">
-                        <label class="form-label" for="country_id_display">Country (Auto-selected)</label>
+                        <label class="form-label">Country (Auto-selected)</label>
                         <select id="country_id_display" class="form-select bg-light" disabled>
                             <option value="" disabled selected>Select Bank First</option>
                             @foreach($countries as $country)
-                                <option value="{{ $country->id }}">
+                                <option value="{{ $country->id }}" {{ (isset($bank_setting) && $bank_setting->country_id == $country->id) ? 'selected' : '' }}>
                                     {{ $country->name }}
                                 </option>
                             @endforeach
                         </select>
-                        <!-- Hidden input to submit the actual country_id value through the form -->
                         <input type="hidden" name="country_id" id="country_id" value="{{ $bank_setting->country_id ?? '' }}">
                     </div>
 
-                    <!-- Account Type (Acc A, Acc B, Acc C) -->
+                    <!-- Owner Name (Locked on Edit) -->
                     <div class="col-md-6">
-                        <label class="form-label" for="type">Account Category / Type</label>
-                        <input type="text" class="form-control" placeholder="Saving Account" name="type" value="{{ $bank_setting->type ?? '' }}"/>
+                        <label class="form-label">Owner Name</label>
+                        <input type="text" class="form-control {{ isset($bank_setting) ? 'bg-light' : '' }}"
+                               name="owner_name" value="{{ $bank_setting->owner_name ?? '' }}"
+                               {{ isset($bank_setting) ? 'readonly' : 'required' }} />
                     </div>
 
-                    <!-- Account Number -->
+                    <!-- Capital / Initial Balance -->
                     <div class="col-md-6">
-                        <label class="form-label" for="account_no">Account No</label>
-                        <input type="text" class="form-control" placeholder="1234567890" name="account_no" value="{{ $bank_setting->account_no ?? '' }}" required/>
+                        <label class="form-label">Capital</label>
+                        <input type="number" step="0.01" min="0" class="form-control {{ isset($bank_setting) ? 'bg-light' : '' }}"
+                               name="capital" value="{{ $bank_setting->capital ?? '0.00' }}"
+                               {{ isset($bank_setting) ? 'readonly' : 'required' }} />
                     </div>
 
-                    <!-- Owner Name -->
+                    <!-- Current Amount Balance (Visible only on Edit) -->
+                    @if(isset($bank_setting))
                     <div class="col-md-6">
-                        <label class="form-label" for="owner_name">Owner Name</label>
-                        <input type="text" class="form-control" placeholder="John Doe" name="owner_name" value="{{ $bank_setting->owner_name ?? '' }}" required/>
+                        <label class="form-label">Current Amount Balance</label>
+                        <input type="number" step="0.01" class="form-control bg-light"
+                               value="{{ $bank_setting->amount }}" disabled />
                     </div>
+                    @endif
 
-                    <!-- Capital -->
-                    <!-- Capital -->
-                    <div class="col-md-6">
-                        <label class="form-label" for="capital">Capital</label>
-                        <input type="number" step="0.01" min="0" id="capital"
-                               class="form-control {{ isset($bank_setting) ? 'bg-light' : '' }}"
-                               placeholder="0.00" name="capital"
-                               value="{{ $bank_setting->capital ?? '' }}"
-                               required
-                               @if(isset($bank_setting)) disabled @endif/>
+                    <hr class="mt-4">
 
-                        {{-- Hidden input to pass the capital value on form submit when disabled --}}
-                        @if(isset($bank_setting))
-                            <input type="hidden" name="capital" value="{{ $bank_setting->capital ?? '' }}">
-                        @endif
-
-                        <div id="capital-error" class="text-danger small mt-1" style="display: none;">Capital cannot be negative or empty.</div>
-                    </div>
-
-                    <!-- Phone Number -->
-                    <div class="col-md-6">
-                        <label class="form-label" for="phone_number">Phone Number</label>
-                        <input type="text" id="phone_number" class="form-control" placeholder="+60123456789" name="phone_number" value="{{ $bank_setting->phone_number ?? '' }}" required/>
-                        <div id="phone-error" class="text-danger small mt-1" style="display: none;">Please enter a valid phone number.</div>
-                    </div>
-
-                    <!-- Expired / Use Date -->
-                    <div class="col-md-6">
-                        <label class="form-label" for="expired_date">Expired / Use Date</label>
-                        <input type="date" id="expired_date" class="form-control" name="expired_date" value="{{ $bank_setting->expired_date ?? '' }}" required/>
-                        <div id="date-error" class="text-danger small mt-1" style="display: none;">Warning: The expiration date is set in the past.</div>
+                    <!-- Multiple Phone Numbers & Expiration Manager -->
+                    <div class="col-12">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <label class="form-label fw-bold mb-0">Phone Numbers & Expiration Dates (Optional)</label>
+                            <button type="button" class="btn btn-sm btn-outline-primary" onclick="addPhoneRow()">
+                                <i class="bx bx-plus"></i> Add Phone Row
+                            </button>
+                        </div>
+                        <div id="phone-rows-container">
+                            @if(isset($bank_setting) && $bank_setting->phoneNumbers->count() > 0)
+                                @foreach($bank_setting->phoneNumbers as $index => $phone)
+                                    <div class="row phone-row g-2 mb-2 align-items-center">
+                                        <div class="col-md-5">
+                                            <input type="text" class="form-control" name="phones[{{ $index }}][phone_number]" placeholder="Phone Number (e.g. +60123456789)" value="{{ $phone->phone_number }}">
+                                        </div>
+                                        <div class="col-md-5">
+                                            <input type="date" class="form-control" name="phones[{{ $index }}][expired_date]" value="{{ $phone->expired_date }}">
+                                        </div>
+                                        <div class="col-md-2">
+                                            <button type="button" class="btn btn-danger btn-sm w-100 h-100 remove-phone-btn" onclick="removePhoneRow(this)">Remove</button>
+                                        </div>
+                                    </div>
+                                @endforeach
+                            @else
+                                <div class="row phone-row g-2 mb-2 align-items-center">
+                                    <div class="col-md-5">
+                                        <input type="text" class="form-control" name="phones[0][phone_number]" placeholder="Phone Number (e.g. +60123456789)">
+                                    </div>
+                                    <div class="col-md-5">
+                                        <input type="date" class="form-control" name="phones[0][expired_date]">
+                                    </div>
+                                    <div class="col-md-2">
+                                        <button type="button" class="btn btn-danger btn-sm w-100 h-100 remove-phone-btn" onclick="removePhoneRow(this)">Remove</button>
+                                    </div>
+                                </div>
+                            @endif
+                        </div>
                     </div>
 
                     <!-- Visual Color Palette Picker -->
-                    <div class="col-12">
+                    <div class="col-12 mt-4">
                         <label class="form-label d-block fw-semibold">Account Color Status</label>
                         <div class="d-flex flex-wrap gap-2 pt-1">
                             @php
                                 $palette = [
                                     'white'      => ['label' => 'White (Default)', 'hex' => '#ffffff'],
                                     'red'        => ['label' => 'Red (Stop Use)', 'hex' => '#ff3e1d'],
-                                    'pink'       => ['label' => 'Pink (Less Use)', 'hex' => '#e83e8c'],
-                                    'blue'       => ['label' => 'Blue', 'hex' => '#03c3ec'],
+                                    'pink'       => ['label' => 'Pink (Less Use)', 'hex' => '#ffdbeb'],
+                                    'blue'       => ['label' => 'Blue', 'hex' => '#2a5d96'],
                                     'lightblue'  => ['label' => 'Light Blue', 'hex' => '#7ad3ff'],
-                                    'green'      => ['label' => 'Green (Active)', 'hex' => '#71dd37'],
+                                    'green'      => ['label' => 'Green (Active)', 'hex' => '#6aae46'],
                                     'lightgreen' => ['label' => 'Light Green (Feeding)', 'hex' => '#b1f08a'],
                                 ];
                                 $selectedColor = isset($bank_setting) ? $bank_setting->color : 'white';
@@ -170,7 +177,7 @@
 
                     <hr>
                     <div class="col-12">
-                        <button type="submit" name="submitButton" class="btn btn-primary">Submit</button>
+                        <button type="submit" class="btn btn-primary">Submit</button>
                     </div>
                     </form>
                 </div>
@@ -178,69 +185,65 @@
         </div>
     </div>
 </div>
-@endsection
 
-@section('scripts')
 <script>
+    let phoneIndex = {{ isset($bank_setting) ? max(1, $bank_setting->phoneNumbers->count()) : 1 }};
+
+    function addPhoneRow() {
+        let container = document.getElementById('phone-rows-container');
+        let rowHtml = `
+            <div class="row phone-row g-2 mb-2 align-items-center">
+                <div class="col-md-5">
+                    <input type="text" class="form-control" name="phones[${phoneIndex}][phone_number]" placeholder="Phone Number">
+                </div>
+                <div class="col-md-5">
+                    <input type="date" class="form-control" name="phones[${phoneIndex}][expired_date]">
+                </div>
+                <div class="col-md-2">
+                    <button type="button" class="btn btn-danger btn-sm w-100 h-100 remove-phone-btn" onclick="removePhoneRow(this)">Remove</button>
+                </div>
+            </div>`;
+        container.insertAdjacentHTML('beforeend', rowHtml);
+        phoneIndex++;
+        updateRemoveButtonStates();
+    }
+
+    function removePhoneRow(button) {
+        let rows = document.querySelectorAll('.phone-row');
+        if (rows.length > 1) {
+            button.closest('.phone-row').remove();
+            updateRemoveButtonStates();
+        }
+    }
+
+    function updateRemoveButtonStates() {
+        let rows = document.querySelectorAll('.phone-row');
+        let removeButtons = document.querySelectorAll('.remove-phone-btn');
+
+        removeButtons.forEach(btn => {
+            if (rows.length === 1) {
+                btn.setAttribute('disabled', 'true');
+                btn.classList.add('opacity-50', 'cursor-not-allowed');
+            } else {
+                btn.removeAttribute('disabled');
+                btn.classList.remove('opacity-50', 'cursor-not-allowed');
+            }
+        });
+    }
+
     function updateCountry() {
         let bankSelect = document.getElementById('bank_id');
         let selectedOption = bankSelect.options[bankSelect.selectedIndex];
         let countryId = selectedOption.getAttribute('data-country-id');
-
-        // Set value to both display dropdown and hidden field
         document.getElementById('country_id_display').value = countryId;
         document.getElementById('country_id').value = countryId;
     }
 
-    // Run on page load in case it's edit mode
     document.addEventListener("DOMContentLoaded", function() {
         if(document.getElementById('bank_id').value) {
             updateCountry();
         }
+        updateRemoveButtonStates();
     });
-
-    function validateBankForm() {
-        let isValid = true;
-
-        let capitalInput = document.getElementById('capital');
-        let capitalError = document.getElementById('capital-error');
-        if (capitalInput.value === '' || parseFloat(capitalInput.value) < 0) {
-            capitalError.style.display = 'block';
-            isValid = false;
-        } else {
-            capitalError.style.display = 'none';
-        }
-
-        let phoneInput = document.getElementById('phone_number');
-        let phoneError = document.getElementById('phone-error');
-        let phoneVal = phoneInput.value.trim();
-        let phoneRegex = /^[0-9+\-\s()]{7,20}$/;
-        if (phoneVal !== '' && !phoneRegex.test(phoneVal)) {
-            phoneError.style.display = 'block';
-            isValid = false;
-        } else {
-            phoneError.style.display = 'none';
-        }
-
-        let dateInput = document.getElementById('expired_date');
-        if (dateInput.value !== '') {
-            let selectedDate = new Date(dateInput.value);
-            let today = new Date();
-            today.setHours(0, 0, 0, 0);
-
-            if (selectedDate < today) {
-                let confirmPast = confirm("The expiration date selected is in the past. Do you still want to proceed?");
-                if (!confirmPast) {
-                    isValid = false;
-                }
-            }
-        }
-
-        if (isValid && typeof showLoading === 'function') {
-            showLoading();
-        }
-
-        return isValid;
-    }
 </script>
 @endsection

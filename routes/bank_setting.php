@@ -13,4 +13,5 @@ Route::prefix('/bank_setting')->as('bank_setting.')->middleware(['auth'])->group
     Route::get('/active/{bank_setting}', 'BankSettingController@active')->name('active');
     Route::get('/destroy/{bank_setting}', 'BankSettingController@destroy')->name('destroy');
     Route::get('/log/{bank_setting}', 'BankSettingController@log')->name('log');
+    Route::post('/{bank_setting}/update-amount', 'BankSettingController@updateAmount')->name('updateAmount');
 });
