@@ -182,6 +182,9 @@ class BankSettingController extends Controller
             // Default remark if empty
             $remarkText = !empty(trim($validated['remark'])) ? $validated['remark'] : 'Manual Balance Adjustment';
 
+            $txDate = Carbon::now();
+            $closingMonth = $txDate->format('Y-m');
+
             Transaction::create([
                 'transaction_no'     => 'TRX-ADJ-' . strtoupper(uniqid()),
                 'transaction_date'   => \Carbon\Carbon::now(),
@@ -192,8 +195,9 @@ class BankSettingController extends Controller
                 'amount'             => abs($difference),
                 'start_balance'      => $oldBalance,
                 'end_balance'        => $newBalance,
-                'purpose_id'         => 2, // Hardcoded to Manual Adjust ID
+                'purpose_id'         => 2,
                 'remark_1'           => $remarkText,
+                'closing_month'      => $closingMonth,
                 'created_by_id'      => \Illuminate\Support\Facades\Auth::id(),
             ]);
         });
@@ -203,14 +207,26 @@ class BankSettingController extends Controller
 
     public function destroy(BankSetting $bank_setting)
     {
-        // Check if there are any linked transaction records
-        if ($bank_setting->transactions()->exists()) {
+        // Check if there are any transactions that do NOT have purpose_id equal to 1
+        $hasOtherTransactions = $bank_setting->transactions()
+            ->where('purpose_id', '!=', 1)
+            ->exists();
+
+        if ($hasOtherTransactions) {
             return redirect()->route('bank_setting.index')
-                ->with('error', 'Cannot delete this bank setting because it contains transaction records.');
+                ->with('error', 'Cannot delete this bank setting because it contains other transaction records.');
         }
 
-        $bank_setting->phoneNumbers()->delete();
-        $bank_setting->delete();
+        DB::transaction(function () use ($bank_setting) {
+            // Delete the opening balance transaction(s) (purpose_id = 1)
+            $bank_setting->transactions()->delete();
+
+            // Delete associated phone numbers
+            $bank_setting->phoneNumbers()->delete();
+
+            // Delete the bank setting itself
+            $bank_setting->delete();
+        });
 
         return redirect()->route('bank_setting.index')->withSuccess('Bank account setting deleted successfully.');
     }

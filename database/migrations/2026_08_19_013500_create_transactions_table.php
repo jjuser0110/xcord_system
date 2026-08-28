@@ -27,6 +27,11 @@ return new class extends Migration
 
             $table->foreignId('purpose_id')->constrained('purposes')->restrictOnDelete();
             $table->text('remark_1')->nullable(); // Used for remarks/notes
+            $table->text('remark_2')->nullable(); // Used for remarks/notes
+
+            $table->unsignedBigInteger('target_bank_setting_id')->nullable();
+            $table->decimal('target_start_balance', 15, 2)->default(0);
+            $table->decimal('target_end_balance', 15, 2)->default(0);
 
             $table->string('column_color')->default('white');
             $table->string('closing_month')->index()->nullable();

@@ -20,7 +20,7 @@
                         <tr>
                             <th>ID</th>
                             <th>Color</th>
-                            <th>Bank Account <small class="text-muted">(Owner - Short Name - Amount)</small></th>
+                            <th>Bank Account <small class="text-muted">(Owner - Bank - Amount)</small></th>
                             <th>Country</th>
                             <th>Capital</th>
                             <th>Current Amount</th>
@@ -78,7 +78,7 @@
                                         <i class="bx bx-edit-alt"></i>Edit
                                     </a>
 
-                                    <button type="button" class="btn btn-sm btn-icon item-delete" style="color: red;" onclick="if(confirm('Are you sure?')){window.location.href='{{ route('bank_setting.destroy',$setting) }}'}" title="Delete">
+                                    <button type="button" class="btn btn-sm btn-icon item-delete" style="color: red;" onclick="if(confirm('Are you sure you want to delete?')){showLoading();window.location.href='{{ route('bank_setting.destroy',$setting) }}'}" title="Delete">
                                         <i class="bx bx-trash"></i>Delete
                                     </button>
                                 </div>

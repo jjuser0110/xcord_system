@@ -17,7 +17,6 @@ return new class extends Migration
             $table->string('phone_number');
             $table->date('expired_date');
             $table->timestamps();
-
         });
     }
 

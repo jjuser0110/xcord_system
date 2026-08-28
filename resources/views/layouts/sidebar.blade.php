@@ -4,7 +4,7 @@ $currentRoute = request()->route()->getName();
 
 // Define route groups for active states
 $isDashboard = Str::is('home*', $currentRoute);
-$isMasterSetting = Str::is(['country.*', 'bank.*', 'user.*', 'purpose.*', 'bank_setting.*'], $currentRoute);
+$isMasterSetting = Str::is(['country.*', 'bank.*', 'user.*', 'purpose.*', 'bank_setting.*', 'bank_phone_number.*'], $currentRoute);
 $isTransaction = Str::is('transaction.*', $currentRoute);
 
 @endphp
@@ -117,6 +117,11 @@ $isTransaction = Str::is('transaction.*', $currentRoute);
                 <li class="menu-item {{ request()->routeIs('bank_setting.*') ? 'active' : '' }}">
                     <a href="{{ route('bank_setting.index') }}" class="menu-link">
                         <div data-i18n="Bank Setting">Bank Setting</div>
+                    </a>
+                </li>
+                <li class="menu-item {{ request()->routeIs('bank_phone_number.*') ? 'active' : '' }}">
+                    <a href="{{ route('bank_phone_number.index') }}" class="menu-link">
+                        <div data-i18n="Phone Number">Phone Number</div>
                     </a>
                 </li>
             </ul>

@@ -2,13 +2,22 @@
 
 @section('content')
 <div class="container-xxl flex-grow-1 container-p-y">
-    <div class="row mb-4">
-        <div class="col-md-6">
-            <h4 class="fw-bold py-3 mb-0">Transaction Logs</h4>
+    <div class="d-flex justify-content-between align-items-center py-3 mb-4">
+        <div>
+            <h4 class="fw-bold m-0">
+                <span class="text-muted fw-light">Transaction /</span> Bank Setting Lists
+            </h4>
+            <!-- Dynamic Date Range Display -->
+            <small class="text-primary fw-semibold">
+                <i class="bx bx-calendar me-1"></i> Period: {{ $startDate }} - {{ $endDate }}
+            </small>
         </div>
-        <div class="col-md-6 text-end">
-            <a href="{{ route('transaction.create') }}" class="btn btn-primary">+ New Transaction</a>
-        </div>
+
+        <!-- Month Filter Form -->
+        <form method="GET" action="{{ route('transaction.index') }}" class="d-flex align-items-center gap-2">
+            <label class="form-label mb-0 fw-semibold">Month:</label>
+            <input type="month" name="month" value="{{ $currentMonth }}" class="form-control form-control-sm" onchange="this.form.submit()">
+        </form>
     </div>
 
     <div class="card">
@@ -17,82 +26,50 @@
                 <table class="table table-bordered">
                     <thead>
                         <tr>
-                            <th>Date / No</th>
-                            <th>Bank Account(s)</th>
-                            <th>Type / Purpose</th>
-                            <th>Remark 1 / Remark 2</th>
-                            <th>Start</th>
-                            <th>Amount</th>
-                            <th>End</th>
-                            <th>By</th>
+                            <th>ID</th>
+                            <th>Bank Setting</th>
+                            <th>Current Balance Amount</th>
+                            <th>Count (This Month)</th>
+                            <th>Action</th>
                         </tr>
                     </thead>
                     <tbody>
-                        @forelse($transactions as $tx)
+                        @forelse($bankSettings as $setting)
                             <tr>
+                                <td>{{ $setting->id }}</td>
+                                <td><strong>{{ $setting->owner_name }} - {{ $setting->bank->short_name ?? '-' }}</strong></td>
+                                <td>{{ number_format($setting->amount, 2) }}</td>
                                 <td>
-                                    <strong>{{ $tx->transaction_date }}</strong><br>
-                                    <small class="text-muted">{{ $tx->transaction_no }}</small>
+                                    <span class="badge bg-label-primary">{{ $setting->month_transaction_count ?? 0 }}</span>
                                 </td>
                                 <td>
-                                    @if($tx->type === 'own')
-                                        <div class="text-danger"><strong>Out:</strong> {{ $tx->bankSetting->bank->bank_name ?? '' }} ({{ $tx->bankSetting->account_no ?? '' }})</div>
-                                        <div class="text-success mt-1"><strong>In:</strong> {{ $tx->targetBankSetting->bank->bank_name ?? '' }} ({{ $tx->targetBankSetting->account_no ?? '' }})</div>
-                                    @else
-                                        {{ $tx->bankSetting->bank->bank_name ?? '' }} ({{ $tx->bankSetting->account_no ?? '' }})
-                                    @endif
-                                </td>
-                                <td>
-                                    <div class="d-flex align-items-center gap-1 mb-1 flex-wrap">
-                                        <span class="badge bg-label-primary text-uppercase">{{ $tx->type }}</span>
-                                        <span class="badge bg-label-{{ $tx->transfer_direction == '+' ? 'success' : 'danger' }}">
-                                            @if($tx->type === 'own')
-                                                Transfer
-                                            @else
-                                                {{ $tx->transfer_direction == '+' ? 'Deposit' : 'Withdraw' }}
-                                            @endif
-                                        </span>
+                                    <div class="d-inline-block text-nowrap">
+                                        <a href="{{ route('transaction.log', ['bank_setting' => $setting->id, 'month' => $currentMonth]) }}" class="btn btn-sm btn-icon item-edit me-4" onclick="showLoading()" title="View">
+                                            <i class="bx bx-show me-1"></i> View
+                                        </a>
                                     </div>
-                                    <small class="text-muted">{{ $tx->purpose->name ?? '' }}</small>
                                 </td>
-                                <td>
-                                    <div>{{ $tx->remark_1 }}</div>
-                                    <small class="text-muted">{{ $tx->remark_2 }}</small>
-                                </td>
-                                <td>
-                                    @if($tx->type === 'own')
-                                        <div class="text-danger">Out: {{ number_format($tx->start_balance, 2) }}</div>
-                                        <div class="text-success">In: {{ number_format($tx->target_start_balance, 2) }}</div>
-                                    @else
-                                        {{ number_format($tx->start_balance, 2) }}
-                                    @endif
-                                </td>
-                                <td>
-                                    <span class="{{ $tx->transfer_direction == '+' ? 'text-success' : 'text-danger' }}">
-                                        {{ $tx->transfer_direction }} {{ number_format($tx->amount, 2) }}
-                                    </span>
-                                </td>
-                                <td>
-                                    @if($tx->type === 'own')
-                                        <div class="text-danger">Out: {{ number_format($tx->end_balance, 2) }}</div>
-                                        <div class="text-success">In: {{ number_format($tx->target_end_balance, 2) }}</div>
-                                    @else
-                                        {{ number_format($tx->end_balance, 2) }}
-                                    @endif
-                                </td>
-                                <td>{{ $tx->creator->name ?? '' }}</td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="8" class="text-center">No transactions found.</td>
+                                <td colspan="5" class="text-center">No bank accounts found for the current country scope.</td>
                             </tr>
                         @endforelse
                     </tbody>
                 </table>
             </div>
-            <div class="mt-3">
-                {{ $transactions->links() }}
-            </div>
+
+            <!-- Pagination Links with Bootstrap 5 Style -->
+            @if(method_exists($bankSettings, 'links'))
+                <div class="mt-4 d-flex justify-content-between align-items-center">
+                    <div class="text-muted small">
+                        Showing {{ $bankSettings->firstItem() ?? 0 }} to {{ $bankSettings->lastItem() ?? 0 }} of {{ $bankSettings->total() }} entries
+                    </div>
+                    <div>
+                        {{ $bankSettings->appends(['month' => $currentMonth])->links('pagination::bootstrap-5') }}
+                    </div>
+                </div>
+            @endif
         </div>
     </div>
 </div>

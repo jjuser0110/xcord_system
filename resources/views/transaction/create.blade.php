@@ -2,194 +2,326 @@
 
 @section('content')
 <div class="container-xxl flex-grow-1 container-p-y">
-    <h4 class="fw-bold py-3 mb-4">Record Transaction</h4>
+    <!-- Breadcrumb & Header Action Section -->
+    <div class="row mb-4 align-items-center">
+        <div class="col-md-7">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-1">
+                    <li class="breadcrumb-item"><a href="{{ route('transaction.index') }}">Bank Settings</a></li>
+                    @if(isset($selectedBank))
+                        <li class="breadcrumb-item"><a href="{{ route('transaction.log', $selectedBank->id) }}">Transaction Logs</a></li>
+                    @endif
+                    <li class="breadcrumb-item active fw-bold">Create Multiple Entries</li>
+                </ol>
+            </nav>
+            <h4 class="fw-bold mb-0">Create Multiple Transactions</h4>
+        </div>
+
+        <div class="col-md-5 text-md-end mt-3 mt-md-0 d-flex justify-content-md-end gap-2">
+            <a href="{{ route('transaction.index') }}" class="btn btn-outline-secondary btn-sm">
+                <i class="bx bx-wallet me-1"></i> Bank Settings
+            </a>
+            @if(isset($selectedBank))
+                <a href="{{ route('transaction.log', $selectedBank->id) }}" class="btn btn-outline-primary btn-sm">
+                    <i class="bx bx-arrow-back me-1"></i> Transaction Logs
+                </a>
+            @endif
+        </div>
+    </div>
 
     <div class="card">
         <div class="card-body">
-            <form action="{{ route('transaction.store') }}" method="POST" class="row g-3">
+            <form action="{{ route('transaction.store') }}" method="POST" id="transactionForm">
                 @csrf
+                <!-- Pass selectedBank ID for JavaScript referencing -->
+                <input type="hidden" id="selected_bank_id_val" value="{{ $selectedBank->id ?? '' }}">
 
-                <!-- Date -->
-                <div class="col-md-6">
-                    <label class="form-label" for="transaction_date">Transaction Date</label>
-                    <input type="date" name="transaction_date" class="form-control" value="{{ date('Y-m-d') }}" required>
-                </div>
+                <div class="row g-3 mb-4">
+                    <!-- Bank Label Display Header -->
+                    <div class="col-12 alert alert-secondary py-2 mb-2">
+                        <strong>Selected Bank Account: </strong>
+                        <span id="headerBankDisplay" class="text-dark fw-bold">
+                            @if(isset($selectedBank))
+                                {{ $selectedBank->owner_name }} - {{ $selectedBank->bank->short_name ?? '' }}
+                            @else
+                                Please select below
+                            @endif
+                        </span>
+                    </div>
 
-                <!-- Transaction Type -->
-                <div class="col-md-6">
-                    <label class="form-label" for="type">Transaction Flow Type</label>
-                    <select name="type" id="type" class="form-select" required onchange="handleTypeChange()">
-                        <option value="" disabled selected>Select Type</option>
-                        <option value="customer">Customer Transaction</option>
-                        <option value="own">Own Account Transfer (Bank Out & Bank In)</option>
-                    </select>
-                </div>
+                    <!-- Date -->
+                    <div class="col-md-4">
+                        <label class="form-label" for="transaction_date">Transaction Date</label>
+                        <input type="date" name="transaction_date" class="form-control" value="{{ date('Y-m-d') }}" required>
+                    </div>
 
-                <!-- CUSTOMER FIELDS (Bank Account & Direction) - Hidden by default -->
-                <div class="col-md-6 customer-fields" style="display: none;">
-                    <label class="form-label" for="bank_setting_id">Bank Account</label>
-                    <select name="bank_setting_id" id="bank_setting_id" class="form-select">
-                        <option value="" disabled selected>Select Bank Account</option>
-                        @foreach($bankSettings as $bank)
-                            <option value="{{ $bank->id }}">
-                                {{ $bank->bank->bank_name ?? '' }} - {{ $bank->account_no }} ({{ $bank->type }}) — Balance: {{ number_format($bank->current_balance, 2) }}
-                            </option>
-                        @endforeach
-                    </select>
-                </div>
+                    <!-- Transaction Flow Type -->
+                    <div class="col-md-4">
+                        <label class="form-label" for="type">Transaction Flow Type</label>
+                        <select name="type" id="type" class="form-select" required onchange="handleTypeChange()">
+                            <option value="" disabled selected>Select Flow Type</option>
+                            <option value="customer" {{ (isset($selectedBank) ? 'selected' : '') }}>Customer Transaction</option>
+                            <option value="own">Own Account Transfer</option>
+                        </select>
+                    </div>
 
-                <div class="col-md-6 customer-fields" style="display: none;">
-                    <label class="form-label" for="transfer_direction">Direction</label>
-                    <select name="transfer_direction" id="transfer_direction" class="form-select">
-                        <option value="+">Plus (+) [Bank In]</option>
-                        <option value="-">Minus (-) [Bank Out]</option>
-                    </select>
-                </div>
+                    <!-- Direction -->
+                    <div class="col-md-4">
+                        <label class="form-label" for="transfer_direction">Direction (Bank In / Out)</label>
+                        <select name="transfer_direction" id="transfer_direction" class="form-select" required onchange="handleTypeChange()">
+                            <option value="+">Plus (+) [Bank In]</option>
+                            <option value="-">Minus (-) [Bank Out]</option>
+                        </select>
+                    </div>
 
-                <!-- CUSTOMER DETAILS SECTION - Hidden by default -->
-                <div class="col-12 customer-fields card border-light bg-label-secondary p-3 mt-3 mb-2" style="display: none;">
-                    <h6 class="fw-bold text-primary mb-3">Customer Information</h6>
-                    <div class="row g-3">
-                        <div class="col-md-6">
-                            <label class="form-label" for="customer_name">Customer Name</label>
-                            <input type="text" name="customer_name" id="customer_name" class="form-control" placeholder="Enter customer name">
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label" for="customer_phone">Customer Phone</label>
-                            <input type="text" name="customer_phone" class="form-control" placeholder="Phone number">
-                        </div>
-                        <div class="col-12">
-                            <label class="form-label" for="customer_address">Customer Address</label>
-                            <textarea name="customer_address" class="form-control" rows="2" placeholder="Customer address details"></textarea>
-                        </div>
+                    <!-- CUSTOMER ACCOUNT SELECTOR -->
+                    <div class="col-md-12 customer-fields" style="display: none;">
+                        <label class="form-label" for="bank_setting_id">Bank Account</label>
+                        <select id="bank_setting_id_display" class="form-select bg-light" disabled>
+                            @foreach($bankSettings as $bank)
+                                @if(!isset($selectedBank) || $selectedBank->id == $bank->id)
+                                    <option value="{{ $bank->id }}" data-label="{{ $bank->owner_name }} - {{ $bank->bank->short_name ?? '' }}"
+                                        {{ (isset($selectedBank) && $selectedBank->id == $bank->id) ? 'selected' : '' }}>
+                                        {{ $bank->owner_name }} - {{ $bank->bank->bank_name ?? '' }} (Balance: {{ number_format($bank->amount, 2) }})
+                                    </option>
+                                @endif
+                            @endforeach
+                        </select>
+                        <input type="hidden" name="bank_setting_id" id="bank_setting_id" value="{{ $selectedBank->id ?? '' }}">
+                    </div>
+
+                    <!-- OWN ACCOUNT TRANSFER SELECTORS (Dynamic Source/Target based on Direction) -->
+                    <div class="col-md-6 own-fields" style="display: none;">
+                        <label class="form-label fw-bold text-danger" id="label_source_bank" for="source_bank_id">From Bank Account (Bank Out -)</label>
+
+                        <!-- Selectable dropdown for external accounts -->
+                        <select name="source_bank_id" id="source_bank_id" class="form-select border-danger">
+                            <option value="" disabled selected>Select Source Bank Account</option>
+                            @foreach($bankSettings as $bank)
+                                @if(!isset($selectedBank) || $selectedBank->id != $bank->id)
+                                    <option value="{{ $bank->id }}">{{ $bank->owner_name }} - {{ $bank->bank->bank_name ?? '' }} (Balance: {{ number_format($bank->amount, 2) }})</option>
+                                @endif
+                            @endforeach
+                        </select>
+
+                        <!-- Disabled view when locked to selected bank -->
+                        <select id="source_bank_id_display" class="form-select border-danger bg-light" disabled style="display: none;">
+                            @foreach($bankSettings as $bank)
+                                @if(!isset($selectedBank) || $selectedBank->id == $bank->id)
+                                    <option value="{{ $bank->id }}" {{ (isset($selectedBank) && $selectedBank->id == $bank->id) ? 'selected' : '' }}>
+                                        {{ $bank->owner_name }} - {{ $bank->bank->bank_name ?? '' }} (Balance: {{ number_format($bank->amount, 2) }})
+                                    </option>
+                                @endif
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <div class="col-md-6 own-fields" style="display: none;">
+                        <label class="form-label fw-bold text-success" id="label_target_bank" for="target_bank_id">To Bank Account (Bank In +)</label>
+
+                        <!-- Selectable dropdown for external accounts -->
+                        <select name="target_bank_id" id="target_bank_id" class="form-select border-success">
+                            <option value="" disabled selected>Select Target Bank Account</option>
+                            @foreach($bankSettings as $bank)
+                                @if(!isset($selectedBank) || $selectedBank->id != $bank->id)
+                                    <option value="{{ $bank->id }}">{{ $bank->owner_name }} - {{ $bank->bank->bank_name ?? '' }} (Balance: {{ number_format($bank->amount, 2) }})</option>
+                                @endif
+                            @endforeach
+                        </select>
+
+                        <!-- Disabled view when locked to selected bank -->
+                        <select id="target_bank_id_display" class="form-select border-success bg-light" disabled style="display: none;">
+                            @foreach($bankSettings as $bank)
+                                @if(!isset($selectedBank) || $selectedBank->id == $bank->id)
+                                    <option value="{{ $bank->id }}" {{ (isset($selectedBank) && $selectedBank->id == $bank->id) ? 'selected' : '' }}>
+                                        {{ $bank->owner_name }} - {{ $bank->bank->bank_name ?? '' }} (Balance: {{ number_format($bank->amount, 2) }})
+                                    </option>
+                                @endif
+                            @endforeach
+                        </select>
                     </div>
                 </div>
 
-                <!-- OWN ACCOUNT FIELDS -->
-                <div class="col-md-6 own-fields" style="display: none;">
-                    <label class="form-label fw-bold text-danger" for="source_bank_id">From Bank Account (Bank Out -)</label>
-                    <select name="source_bank_id" id="source_bank_id" class="form-select border-danger">
-                        <option value="" disabled selected>Select Source Bank Acc</option>
-                        @foreach($bankSettings as $bank)
-                            <option value="{{ $bank->id }}">
-                                {{ $bank->bank->bank_name ?? '' }} - {{ $bank->account_no }} ({{ $bank->type }}) — Balance: {{ number_format($bank->current_balance, 2) }}
-                            </option>
-                        @endforeach
-                    </select>
-                </div>
+                <hr>
 
-                <div class="col-md-6 own-fields" style="display: none;">
-                    <label class="form-label fw-bold text-success" for="target_bank_id">To Bank Account (Bank In +)</label>
-                    <select name="target_bank_id" id="target_bank_id" class="form-select border-success">
-                        <option value="" disabled selected>Select Target Bank Acc</option>
-                        @foreach($bankSettings as $bank)
-                            <option value="{{ $bank->id }}">
-                                {{ $bank->bank->bank_name ?? '' }} - {{ $bank->account_no }} ({{ $bank->type }}) — Balance: {{ number_format($bank->current_balance, 2) }}
-                            </option>
-                        @endforeach
-                    </select>
-                </div>
-
-                <!-- Amount -->
-                <div class="col-md-6">
-                    <label class="form-label" for="amount">Amount</label>
-                    <input type="number" step="0.01" min="0.01" name="amount" class="form-control" placeholder="0.00" required>
-                </div>
-
-                <!-- Purpose -->
-                <div class="col-md-6">
-                    <label class="form-label" for="purpose_id">Purpose</label>
-                    <select name="purpose_id" class="form-select" required>
-                        <option value="" disabled selected>Select Purpose</option>
-                        @foreach($purposes as $purpose)
-                            <option value="{{ $purpose->id }}">{{ $purpose->title }}</option>
-                        @endforeach
-                    </select>
-                </div>
-
-                <!-- Color Palette Picker -->
-                {{-- <div class="col-12">
-                    <label class="form-label d-block fw-semibold">Row Highlight Color Status</label>
-                    <div class="d-flex flex-wrap gap-2 pt-1">
-                        @php
-                            $palette = [
-                                'white'      => ['label' => 'White (Default)', 'hex' => '#ffffff'],
-                                'red'        => ['label' => 'Red (Stop Use)', 'hex' => '#ff3e1d'],
-                                'pink'       => ['label' => 'Pink (Less Use)', 'hex' => '#e83e8c'],
-                                'blue'       => ['label' => 'Blue', 'hex' => '#03c3ec'],
-                                'lightblue'  => ['label' => 'Light Blue', 'hex' => '#7ad3ff'],
-                                'green'      => ['label' => 'Green (Active)', 'hex' => '#71dd37'],
-                                'lightgreen' => ['label' => 'Light Green (Feeding)', 'hex' => '#b1f08a'],
-                            ];
-                        @endphp
-
-                        @foreach($palette as $val => $info)
-                            <label class="m-0 cursor-pointer">
-                                <input type="radio" name="column_color" value="{{ $info['hex'] }}" class="color-option-input d-none" {{ $val == 'white' ? 'checked' : '' }} required>
-                                <span class="color-swatch-card d-inline-flex align-items-center gap-2 p-2 border rounded bg-white shadow-sm">
-                                    <span class="color-swatch-circle rounded-circle border" style="width: 20px; height: 20px; background-color: {{ $info['hex'] }}; display: inline-block;"></span>
-                                    <span class="fw-medium text-dark small">{{ $info['label'] }}</span>
-                                </span>
-                            </label>
-                        @endforeach
+                <!-- MULTIPLE TRANSACTION ROWS MANAGER -->
+                <div class="col-12 mb-3">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <label class="form-label fw-bold mb-0">Transaction Entry Rows</label>
+                        <button type="button" class="btn btn-sm btn-outline-primary" onclick="addRow()">
+                            <i class="bx bx-plus"></i> Add Row
+                        </button>
                     </div>
-                </div> --}}
 
-                <!-- Remarks (Textareas) -->
-                <div class="col-md-6">
-                    <label class="form-label" for="remark_1">Remark 1</label>
-                    <textarea name="remark_1" class="form-control" rows="2" placeholder="Primary note"></textarea>
-                </div>
-
-                <div class="col-md-6">
-                    <label class="form-label" for="remark_2">Remark 2</label>
-                    <textarea name="remark_2" class="form-control" rows="2" placeholder="Secondary note"></textarea>
+                    <div id="transaction-rows-container">
+                        <div class="row transaction-row g-2 mb-3 align-items-center border p-2 rounded bg-light">
+                            <div class="col-md-3">
+                                <label class="form-label small">Amount <span class="text-danger">*</span></label>
+                                <input type="number" step="0.01" min="0.01" class="form-control" name="items[0][amount]" placeholder="0.00" required>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label small">Purpose <span class="text-danger">*</span></label>
+                                <select name="items[0][purpose_id]" class="form-select" required>
+                                    <option value="" disabled selected>Select Purpose</option>
+                                    @foreach($purposes as $purpose)
+                                        <option value="{{ $purpose->id }}">{{ $purpose->title }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label small">Remark 1 (Details/Customer Name)</label>
+                                <input type="text" class="form-control" name="items[0][remark_1]" placeholder="Remark 1">
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label small">Remark 2</label>
+                                <input type="text" class="form-control" name="items[0][remark_2]" placeholder="Remark 2">
+                            </div>
+                            <div class="col-md-1 text-end pt-4">
+                                <button type="button" class="btn btn-danger btn-sm remove-row-btn" onclick="removeRow(this)">X</button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="col-12 mt-4">
-                    <button type="submit" class="btn btn-primary">Save Transaction</button>
-                    <a href="{{ route('transaction.index') }}" class="btn btn-secondary">Cancel</a>
+                    <button type="submit" class="btn btn-primary">Save All Transactions</button>
+                    <a href="{{ isset($selectedBank) ? route('transaction.log', $selectedBank->id) : route('transaction.index') }}" class="btn btn-secondary">Cancel</a>
                 </div>
             </form>
         </div>
     </div>
 </div>
 
-<style>
-    .color-option-input:checked + .color-swatch-card {
-        border-color: #696cff !important;
-        box-shadow: 0 0 0 0.2rem rgba(105, 108, 255, 0.25) !important;
-        background-color: #f8f9fa !important;
-    }
-</style>
-
 <script>
-function handleTypeChange() {
-    let type = document.getElementById('type').value;
-    let customerFields = document.querySelectorAll('.customer-fields');
-    let ownFields = document.querySelectorAll('.own-fields');
+    let rowIndex = 1;
 
-    if (type === 'own') {
-        customerFields.forEach(el => el.style.display = 'none');
-        ownFields.forEach(el => el.style.display = 'block');
+    function addRow() {
+        let container = document.getElementById('transaction-rows-container');
+        let purposeOptions = `@foreach($purposes as $purpose)<option value="{{ $purpose->id }}">{{ $purpose->title }}</option>@endforeach`;
 
-        document.getElementById('bank_setting_id').removeAttribute('required');
-        document.getElementById('transfer_direction').removeAttribute('required');
-        document.getElementById('customer_name').removeAttribute('required');
-
-        document.getElementById('source_bank_id').setAttribute('required', 'required');
-        document.getElementById('target_bank_id').setAttribute('required', 'required');
-    } else if (type === 'customer') {
-        customerFields.forEach(el => el.style.display = 'block');
-        ownFields.forEach(el => el.style.display = 'none');
-
-        document.getElementById('bank_setting_id').setAttribute('required', 'required');
-        document.getElementById('transfer_direction').setAttribute('required', 'required');
-        document.getElementById('customer_name').setAttribute('required', 'required');
-
-        document.getElementById('source_bank_id').removeAttribute('required');
-        document.getElementById('target_bank_id').removeAttribute('required');
+        let rowHtml = `
+            <div class="row transaction-row g-2 mb-3 align-items-center border p-2 rounded bg-light">
+                <div class="col-md-3">
+                    <label class="form-label small">Amount <span class="text-danger">*</span></label>
+                    <input type="number" step="0.01" min="0.01" class="form-control" name="items[${rowIndex}][amount]" placeholder="0.00" required>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small">Purpose <span class="text-danger">*</span></label>
+                    <select name="items[${rowIndex}][purpose_id]" class="form-select" required>
+                        <option value="" disabled selected>Select Purpose</option>
+                        ${purposeOptions}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small">Remark 1</label>
+                    <input type="text" class="form-control" name="items[${rowIndex}][remark_1]" placeholder="Remark 1">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small">Remark 2</label>
+                    <input type="text" class="form-control" name="items[${rowIndex}][remark_2]" placeholder="Remark 2">
+                </div>
+                <div class="col-md-1 text-end pt-4">
+                    <button type="button" class="btn btn-danger btn-sm remove-row-btn" onclick="removeRow(this)">X</button>
+                </div>
+            </div>`;
+        container.insertAdjacentHTML('beforeend', rowHtml);
+        rowIndex++;
+        updateRemoveButtons();
     }
-}
+
+    function removeRow(button) {
+        let rows = document.querySelectorAll('.transaction-row');
+        if (rows.length > 1) {
+            button.closest('.transaction-row').remove();
+            updateRemoveButtons();
+        }
+    }
+
+    function updateRemoveButtons() {
+        let rows = document.querySelectorAll('.transaction-row');
+        let removeBtns = document.querySelectorAll('.remove-row-btn');
+        removeBtns.forEach(btn => {
+            if (rows.length === 1) {
+                btn.setAttribute('disabled', 'true');
+            } else {
+                btn.removeAttribute('disabled');
+            }
+        });
+    }
+
+    function handleTypeChange() {
+        let type = document.getElementById('type').value;
+        let direction = document.getElementById('transfer_direction').value;
+        let customerFields = document.querySelectorAll('.customer-fields');
+        let ownFields = document.querySelectorAll('.own-fields');
+
+        let sourceSelect = document.getElementById('source_bank_id');
+        let sourceDisplay = document.getElementById('source_bank_id_display');
+        let targetSelect = document.getElementById('target_bank_id');
+        let targetDisplay = document.getElementById('target_bank_id_display');
+
+        if (type === 'own') {
+            customerFields.forEach(el => el.style.display = 'none');
+            ownFields.forEach(el => el.style.display = 'block');
+
+            if (direction === '+') {
+                // BANK IN: Selected Bank is Target (To), dropdown is Source (From)
+                document.getElementById('label_source_bank').innerText = "From Bank Account (Bank Out -)";
+                document.getElementById('label_target_bank').innerText = "To Bank Account [Selected Bank] (Bank In +)";
+
+                sourceSelect.style.display = 'block';
+                sourceSelect.setAttribute('required', 'required');
+                sourceDisplay.style.display = 'none';
+                sourceDisplay.removeAttribute('name');
+
+                targetSelect.style.display = 'none';
+                targetSelect.removeAttribute('required');
+                targetSelect.removeAttribute('name');
+
+                targetDisplay.style.display = 'block';
+                targetDisplay.setAttribute('name', 'target_bank_id');
+            } else {
+                // BANK OUT: Selected Bank is Source (From), dropdown is Target (To)
+                document.getElementById('label_source_bank').innerText = "From Bank Account [Selected Bank] (Bank Out -)";
+                document.getElementById('label_target_bank').innerText = "To Bank Account (Bank In +)";
+
+                sourceSelect.style.display = 'none';
+                sourceSelect.removeAttribute('required');
+                sourceSelect.removeAttribute('name');
+
+                sourceDisplay.style.display = 'block';
+                sourceDisplay.setAttribute('name', 'source_bank_id');
+
+                targetSelect.style.display = 'block';
+                targetSelect.setAttribute('required', 'required');
+                targetSelect.setAttribute('name', 'target_bank_id');
+
+                targetDisplay.style.display = 'none';
+                targetDisplay.removeAttribute('name');
+            }
+        } else if (type === 'customer') {
+            customerFields.forEach(el => el.style.display = 'block');
+            ownFields.forEach(el => el.style.display = 'none');
+            sourceSelect.removeAttribute('required');
+            targetSelect.removeAttribute('required');
+        }
+    }
+
+    function updateHeaderDisplay() {
+        let select = document.getElementById('bank_setting_id_display');
+        if (select && select.options[select.selectedIndex]) {
+            let option = select.options[select.selectedIndex];
+            let label = option.getAttribute('data-label');
+            if (label) {
+                document.getElementById('headerBankDisplay').innerText = label;
+            }
+        }
+    }
+
+    document.addEventListener("DOMContentLoaded", function() {
+        handleTypeChange();
+        updateHeaderDisplay();
+        updateRemoveButtons();
+    });
 </script>
 @endsection
