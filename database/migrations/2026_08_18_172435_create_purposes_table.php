@@ -14,12 +14,18 @@ return new class extends Migration
         Schema::create('purposes', function (Blueprint $table) {
             $table->id();
             $table->string('title');
-            $table->text('description');
-            $table->foreignId('country_id')->constrained('countries')->restrictOnDelete();
-            $table->foreignId('created_by_id')->nullable()->constrained('users')->restrictOnDelete();
+            $table->text('description')->nullable();
+            $table->boolean('is_global')->default(false);
+            $table->foreignId('created_by_id')->nullable()->constrained('users')->nullOnDelete();
             $table->boolean('is_active')->default(true);
             $table->timestamps();
             $table->softDeletes();
+        });
+
+        Schema::create('country_purpose', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('purpose_id')->constrained('purposes')->cascadeOnDelete();
+            $table->foreignId('country_id')->constrained('countries')->cascadeOnDelete();
         });
     }
 
@@ -28,6 +34,7 @@ return new class extends Migration
      */
     public function down(): void
     {
+        Schema::dropIfExists('country_purpose');
         Schema::dropIfExists('purposes');
     }
 };

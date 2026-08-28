@@ -4,8 +4,7 @@ $currentRoute = request()->route()->getName();
 
 // Define route groups for active states
 $isDashboard = Str::is('home*', $currentRoute);
-$isMasterSetting = Str::is(['country.*', 'bank.*', 'user.*', 'purpose.*'], $currentRoute);
-$isBankSetting = Str::is('bank_setting.*', $currentRoute);
+$isMasterSetting = Str::is(['country.*', 'bank.*', 'user.*', 'purpose.*', 'bank_setting.*'], $currentRoute);
 $isTransaction = Str::is('transaction.*', $currentRoute);
 
 @endphp
@@ -100,11 +99,6 @@ $isTransaction = Str::is('transaction.*', $currentRoute);
                         <div data-i18n="Country">Country</div>
                     </a>
                 </li>
-                <li class="menu-item {{ request()->routeIs('bank.*') ? 'active' : '' }}">
-                    <a href="{{ route('bank.index') }}" class="menu-link">
-                        <div data-i18n="Bank">Bank</div>
-                    </a>
-                </li>
                 <li class="menu-item {{ request()->routeIs('purpose.*') ? 'active' : '' }}">
                     <a href="{{ route('purpose.index') }}" class="menu-link">
                         <div data-i18n="Purpose">Purpose</div>
@@ -115,17 +109,19 @@ $isTransaction = Str::is('transaction.*', $currentRoute);
                         <div data-i18n="Company Staff">Company Staff</div>
                     </a>
                 </li>
+                <li class="menu-item {{ request()->routeIs('bank.*') ? 'active' : '' }}">
+                    <a href="{{ route('bank.index') }}" class="menu-link">
+                        <div data-i18n="Bank">Bank</div>
+                    </a>
+                </li>
+                <li class="menu-item {{ request()->routeIs('bank_setting.*') ? 'active' : '' }}">
+                    <a href="{{ route('bank_setting.index') }}" class="menu-link">
+                        <div data-i18n="Bank Setting">Bank Setting</div>
+                    </a>
+                </li>
             </ul>
         </li>
         @endif
-
-        <!-- Bank Setting (Standalone) -->
-        <li class="menu-item {{ $isBankSetting ? 'active' : '' }}">
-            <a href="{{ route('bank_setting.index') }}" class="menu-link">
-                <i class="menu-icon tf-icons bx bx-slider-alt"></i>
-                <div data-i18n="Bank Setting">Bank Setting</div>
-            </a>
-        </li>
 
         <!-- Transactions -->
         <li class="menu-item {{ $isTransaction ? 'active' : '' }}">

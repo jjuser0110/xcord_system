@@ -13,6 +13,7 @@
             <div class="card-body">
                 <form class="row g-3" enctype="multipart/form-data" @if (isset($purpose)) method="post" action="{{ route('purpose.update',$purpose) }}" @else method="post" action="{{ route('purpose.store') }}" @endif onsubmit="showLoading()">
                 @csrf
+
                 <div class="col-md-6">
                     <label class="form-label" for="title">Purpose Title</label>
                     <input
@@ -23,18 +24,37 @@
                     value="{{$purpose->title??''}}"
                     required/>
                 </div>
-                {{-- <div class="col-md-6">
-                    <label class="form-label" for="country_id">Country</label>
-                    <select name="country_id" id="country_id" class="form-select" required>
-                        <option value="" disabled selected>Select Country</option>
+
+                <div class="col-12">
+                    <label class="form-label d-block">Country Assignment</label>
+
+                    <!-- Global Checkbox -->
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" id="is_global" name="is_global" value="1"
+                            {{ (isset($purpose) && $purpose->is_global) ? 'checked' : '' }} onchange="handleGlobalChange()">
+                        <label class="form-check-label fw-bold text-primary" for="is_global">
+                            Link to All Countries (Global)
+                        </label>
+                    </div>
+
+                    <!-- Checkboxes for individual countries -->
+                    <div class="row" id="country-checkboxes-container">
+                        @php
+                            $selectedCountryIds = isset($selectedCountries) ? $selectedCountries : [];
+                        @endphp
                         @foreach($countries as $country)
-                            <option value="{{ $country->id }}"
-                                {{ (isset($purpose) && $purpose->country_id == $country->id) ? 'selected' : '' }}>
-                                {{ $country->name }}
-                            </option>
+                            <div class="col-md-3 mb-2">
+                                <div class="form-check">
+                                    <input class="form-check-input country-checkbox" type="checkbox" name="country_ids[]" value="{{ $country->id }}" id="country_{{ $country->id }}"
+                                        {{ in_array($country->id, $selectedCountryIds) ? 'checked' : '' }} onchange="handleCountryCheckboxChange()">
+                                    <label class="form-check-label" for="country_{{ $country->id }}">
+                                        {{ $country->name }} ({{ $country->currency_code }})
+                                    </label>
+                                </div>
+                            </div>
                         @endforeach
-                    </select>
-                </div> --}}
+                    </div>
+                </div>
 
                 {{-- <div class="col-12">
                     <label class="form-label" for="description">Description</label>
@@ -42,9 +62,9 @@
                     class="form-control"
                     placeholder="Enter description here..."
                     name="description"
-                    rows="4"
-                    required>{{$purpose->description??''}}</textarea>
+                    rows="4">{{$purpose->description??''}}</textarea>
                 </div> --}}
+
                 <hr>
                 <div class="col-12">
                     <button type="submit" name="submitButton" class="btn btn-primary">Submit</button>
@@ -59,4 +79,41 @@
 @endsection
 
 @section('scripts')
+<script>
+    function handleGlobalChange() {
+        const isGlobal = document.getElementById('is_global').checked;
+        const checkboxes = document.querySelectorAll('.country-checkbox');
+
+        checkboxes.forEach(cb => {
+            if (isGlobal) {
+                cb.checked = false;
+                cb.disabled = true;
+            } else {
+                cb.disabled = false;
+            }
+        });
+    }
+
+    function handleCountryCheckboxChange() {
+        const checkboxes = document.querySelectorAll('.country-checkbox');
+        const isGlobalCheckbox = document.getElementById('is_global');
+
+        const anyChecked = Array.from(checkboxes).some(cb => cb.checked);
+
+        if (anyChecked) {
+            isGlobalCheckbox.checked = false;
+            isGlobalCheckbox.disabled = true;
+        } else {
+            isGlobalCheckbox.disabled = false;
+        }
+    }
+
+    document.addEventListener("DOMContentLoaded", function() {
+        if (document.getElementById('is_global').checked) {
+            handleGlobalChange();
+        } else {
+            handleCountryCheckboxChange();
+        }
+    });
+</script>
 @endsection

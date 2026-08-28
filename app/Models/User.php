@@ -76,4 +76,24 @@ class User extends Authenticatable
         return $this->hasMany(Country::class, 'created_by_id');
     }
 
+    public function createdBanks()
+    {
+        return $this->hasMany(Bank::class, 'created_by_id');
+    }
+
+    public function createdBankSettings()
+    {
+        return $this->hasMany(BankSetting::class, 'created_by_id');
+    }
+
+    public function createdPurposes()
+    {
+        return $this->hasMany(Purpose::class, 'created_by_id');
+    }
+
+    public function createdTransactions()
+    {
+        return $this->hasMany(Transaction::class, 'created_by_id');
+    }
+
 }

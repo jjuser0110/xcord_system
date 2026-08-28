@@ -126,6 +126,17 @@ class UserController extends Controller
             return redirect()->route('user.index')->with('error', 'You cannot delete your own account.');
         }
 
+        $hasCountries    = $user->createdCountries()->exists();
+        $hasBanks        = $user->createdBanks()->exists();
+        $hasBankSettings = $user->createdBankSettings()->exists();
+        $hasPurposes     = $user->createdPurposes()->exists();
+        $hasTransactions = $user->createdTransactions()->exists();
+
+        if ($hasCountries || $hasBanks || $hasBankSettings || $hasPurposes || $hasTransactions) {
+            return redirect()->route('user.index')
+                ->with('error', 'Cannot delete this user account because they have linked system records (countries, banks, transactions, etc.).');
+        }
+
         $user->delete();
 
         return redirect()->route('user.index')->withSuccess('User deleted successfully.');

@@ -15,8 +15,8 @@ class Purpose extends Model
         'title',
         'description',
         'created_by_id',
-        'country_id',
-        'is_active'
+        'is_active',
+        'is_global'
     ];
 
     /**
@@ -28,12 +28,10 @@ class Purpose extends Model
     }
 
     /**
-     * Relationship: The country this purpose belongs to.
+     * Relationship: Countries linked to this purpose (Many-to-Many).
      */
-    public function country()
+    public function countries()
     {
-        return $this->belongsTo(Country::class, 'country_id');
+        return $this->belongsToMany(Country::class, 'country_purpose', 'purpose_id', 'country_id');
     }
-
-
 }

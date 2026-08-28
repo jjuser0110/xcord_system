@@ -26,7 +26,6 @@
                     <thead>
                         <tr>
                             <th>Purpose Title</th>
-                            {{-- <th>Description</th> --}}
                             <th>Country/Currency</th>
                             <th>Actions</th>
                         </tr>
@@ -35,8 +34,17 @@
                         @foreach($purpose as $row)
                         <tr>
                             <td>{{$row?->title??""}}</td>
-                            {{-- <td>{{$row?->description??""}}</td> --}}
-                            <td>{{$row?->country?->name??""}} / {{$row?->country?->currency_code??""}}</td>
+                            <td>
+                                @if($row->is_global)
+                                    <span class="badge bg-label-primary">All Countries (Global)</span>
+                                @else
+                                    @forelse($row->countries as $country)
+                                        <span class="badge bg-label-secondary me-1">{{ $country->name }} ({{ $country->currency_code }})</span>
+                                    @empty
+                                        <span class="badge bg-label-warning">None Assigned</span>
+                                    @endforelse
+                                @endif
+                            </td>
                             <td>
                                 <div class="d-inline-block text-nowrap">
                                     <a href="{{ route('purpose.edit',$row) }}" class="btn btn-sm btn-icon item-edit me-4" onclick="showLoading()" title="Edit">
@@ -48,7 +56,6 @@
                                     </button>
                                 </div>
                             </td>
-
                         </tr>
                         @endforeach
                     </tbody>
@@ -57,13 +64,13 @@
         </div>
     </div>
     <!-- / Content -->
+@endsection
 
+@section('page-js')
+@endsection
 
-    @endsection
-    @section('page-js')
-    @endsection
-    @section('scripts')
-      <script>
+@section('scripts')
+  <script>
     $(function(){
       var table = $('#mytable').DataTable({
         responsive: true,
@@ -73,4 +80,4 @@
       });
     });
   </script>
-    @endsection
+@endsection

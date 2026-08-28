@@ -67,14 +67,17 @@ class CountryController extends Controller
         $hasUsers = $country->users()->exists();
         $hasBanks = $country->banks()->exists();
         $hasBankSettings = BankSetting::where('country_id', $country->id)->exists();
-        $hasPurposes = Purpose::where('country_id', $country->id)->exists();
+
+        // Check if any purposes are linked to this country via the pivot table
+        $hasPurposes = $country->purposes()->exists();
+
         $hasTransactions = Transaction::where('country_id', $country->id)->exists();
         $hasBankSnapshots = BankSnapshot::where('country_id', $country->id)->exists();
         //$hasBankLogs = \App\Models\BankLog::where('country_id', $country->id)->exists();
 
         if ($hasUsers || $hasBanks || $hasBankSettings || $hasPurposes || $hasTransactions || $hasBankSnapshots) {
             return redirect()->route('country.index')
-                ->with('error', 'Cannot delete this country because it has linked records (users, banks, transactions, etc.).');
+                ->with('error', 'Cannot delete this country because it has linked records (users, banks, purposes, transactions, etc.).');
         }
 
         // Proceed with soft delete if no relations exist

@@ -47,4 +47,12 @@ class Country extends Model
     {
         return $this->hasMany(Bank::class, 'country_id');
     }
+
+    /**
+ * Relationship: Purposes linked to this country (Many-to-Many).
+ */
+    public function purposes()
+    {
+        return $this->belongsToMany(Purpose::class, 'country_purpose', 'country_id', 'purpose_id');
+    }
 }
