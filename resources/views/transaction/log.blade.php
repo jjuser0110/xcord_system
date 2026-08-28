@@ -106,7 +106,7 @@
                                 <td>{{ $tx->purpose->title ?? '-' }}</td>
                                 <td class="text-truncate" style="max-width: 150px;" title="{{ $tx->remark_1 }}">{{ $tx->remark_1 ?? '-' }}</td>
                                 <td class="text-truncate" style="max-width: 150px;" title="{{ $tx->remark_2 }}">{{ $tx->remark_2 ?? '-' }}</td>
-                                <td class="small text-muted">{{ $tx->creator->name ?? '-' }}</td>
+                                <td class="small text-muted">{{ ucfirst($tx->creator->username ?? '-') }}</td>
                             </tr>
                         @empty
                             <tr>
