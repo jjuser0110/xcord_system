@@ -6,6 +6,9 @@ $currentRoute = request()->route()->getName();
 $isDashboard = Str::is('home*', $currentRoute);
 $isMasterSetting = Str::is(['country.*', 'bank.*', 'user.*', 'purpose.*', 'bank_setting.*', 'bank_phone_number.*'], $currentRoute);
 $isTransaction = Str::is('transaction.*', $currentRoute);
+$isProviderSettlement = Str::is('provider_settlement.*', $currentRoute);
+$isBankSnapshot = Str::is('bank_snapshot.*', $currentRoute);
+
 
 @endphp
 <aside id="layout-menu" class="layout-menu menu-vertical menu bg-menu-theme">
@@ -133,6 +136,22 @@ $isTransaction = Str::is('transaction.*', $currentRoute);
             <a href="{{ route('transaction.index') }}" class="menu-link">
                 <i class="menu-icon tf-icons bx bx-transfer-alt"></i>
                 <div data-i18n="Transaction">Transaction</div>
+            </a>
+        </li>
+
+        <!-- Provider Settlement -->
+        <li class="menu-item {{ $isProviderSettlement ? 'active' : '' }}">
+            <a href="{{ route('provider_settlement.index') }}" class="menu-link">
+                <i class="menu-icon tf-icons bx bx-receipt"></i>
+                <div data-i18n="Provider Settlement">Provider Settlement</div>
+            </a>
+        </li>
+
+        <!-- Bank Snapshot Settlement -->
+        <li class="menu-item {{ $isBankSnapshot ? 'active' : '' }}">
+            <a href="{{ route('bank_snapshot.index') }}" class="menu-link">
+                <i class="menu-icon tf-icons bx bx-calendar-check"></i>
+                <div data-i18n="Daily Bank Account Balance">Daily Bank Account Balance</div>
             </a>
         </li>
 

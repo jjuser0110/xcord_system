@@ -9,14 +9,17 @@ use App\Models\Country;
 use App\Models\Purpose;
 use App\Models\Transaction;
 use App\Models\BankPhoneNumber;
+use App\Models\BankSnapshot;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use App\Traits\CountryScopeTrait;
+use App\Traits\HasMonthlySummary;
 use Carbon\Carbon;
 
 class BankSettingController extends Controller
 {
     use CountryScopeTrait;
+    use HasMonthlySummary;
 
     public function index(Request $request)
     {
@@ -94,10 +97,12 @@ class BankSettingController extends Controller
 
             // 3. Create Opening Balance Transaction Log
             $openingPurpose = Purpose::where('title', 'Opening Balance')->first();
+            $txDate = Carbon::now();
+            $closingMonth = $txDate->format('Y-m');
 
             Transaction::create([
                 'transaction_no'     => 'TRX-OP-' . strtoupper(uniqid()),
-                'transaction_date'   => Carbon::now(),
+                'transaction_date'   => $txDate,
                 'country_id'         => $bankSetting->country_id,
                 'bank_setting_id'    => $bankSetting->id,
                 'type'               => 'adjustment',
@@ -107,8 +112,12 @@ class BankSettingController extends Controller
                 'end_balance'        => $bankSetting->capital,
                 'purpose_id'         => $openingPurpose ? $openingPurpose->id : 1,
                 'remark_1'           => 'Opening Balance Capital Initialization',
+                'closing_month'      => $closingMonth,
                 'created_by_id'      => Auth::id(),
             ]);
+
+            $this->refreshMonthlySummary($bankSetting->id, $closingMonth);
+            $this->updateTodaySnapshot($bankSetting);
         });
 
         return redirect()->route('bank_setting.index')->withSuccess('Bank account setting created successfully.');
@@ -178,6 +187,7 @@ class BankSettingController extends Controller
 
             // Update bank amount tracker
             $bank_setting->update(['amount' => $newBalance]);
+            $this->updateTodaySnapshot($bank_setting);
 
             // Default remark if empty
             $remarkText = !empty(trim($validated['remark'])) ? $validated['remark'] : 'Manual Balance Adjustment';
@@ -187,7 +197,7 @@ class BankSettingController extends Controller
 
             Transaction::create([
                 'transaction_no'     => 'TRX-ADJ-' . strtoupper(uniqid()),
-                'transaction_date'   => \Carbon\Carbon::now(),
+                'transaction_date'   => $txDate,
                 'country_id'         => $bank_setting->country_id,
                 'bank_setting_id'    => $bank_setting->id,
                 'type'               => 'adjustment',
@@ -198,8 +208,9 @@ class BankSettingController extends Controller
                 'purpose_id'         => 2,
                 'remark_1'           => $remarkText,
                 'closing_month'      => $closingMonth,
-                'created_by_id'      => \Illuminate\Support\Facades\Auth::id(),
+                'created_by_id'      => Auth::id(),
             ]);
+            $this->refreshMonthlySummary($bank_setting->id, $closingMonth);
         });
 
         return back()->withSuccess('Bank amount updated successfully.');
@@ -224,10 +235,26 @@ class BankSettingController extends Controller
             // Delete associated phone numbers
             $bank_setting->phoneNumbers()->delete();
 
+            DB::table('bank_monthly_summaries')->where('bank_setting_id', $bank_setting->id)->delete();
+
             // Delete the bank setting itself
             $bank_setting->delete();
         });
 
         return redirect()->route('bank_setting.index')->withSuccess('Bank account setting deleted successfully.');
+    }
+
+    protected function updateTodaySnapshot(BankSetting $bankSetting)
+    {
+        BankSnapshot::updateOrCreate(
+            [
+                'bank_setting_id' => $bankSetting->id,
+                'snapshot_date'   => Carbon::today()->toDateString(),
+            ],
+            [
+                'country_id'      => $bankSetting->country_id,
+                'capital'         => $bankSetting->amount,
+            ]
+        );
     }
 }

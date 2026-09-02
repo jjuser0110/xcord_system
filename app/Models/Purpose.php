@@ -16,7 +16,9 @@ class Purpose extends Model
         'description',
         'created_by_id',
         'is_active',
-        'is_global'
+        'is_global',
+        'has_provider_settlement',
+        'provider_name'
     ];
 
     /**

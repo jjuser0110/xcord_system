@@ -45,6 +45,21 @@
         </div>
     </div>
 
+    <div class="row mb-3">
+        <div class="col-md-6">
+            <div class="card bg-label-success p-3">
+                <span>Total In ({{ $currentMonth }}):</span>
+                <h4 class="fw-bold mb-0 text-success">+ {{ number_format($totalIn ?? 0, 2) }}</h4>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card bg-label-danger p-3">
+                <span>Total Out ({{ $currentMonth }}):</span>
+                <h4 class="fw-bold mb-0 text-danger">- {{ number_format($totalOut ?? 0, 2) }}</h4>
+            </div>
+        </div>
+    </div>
+
     <!-- Main Transaction Table Card -->
     <div class="card">
         <div class="card-body px-3 py-3">
@@ -60,7 +75,9 @@
                             <th class="py-2">Purpose</th>
                             <th class="py-2">Remark 1</th>
                             <th class="py-2">Remark 2</th>
+                            <th class="py-2">Created At</th>
                             <th class="py-2">Created By</th>
+                            <th class="py-2">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -99,27 +116,72 @@
                                 </td>
 
                                 <td>
-                                    <span class="badge bg-label-primary px-2 py-1" style="font-size: 0.7rem;">
-                                        {{ strtolower($tx->type) === 'customer' ? 'CUST' : strtoupper($tx->type) }}
+                                    <span class="badge bg-label-primary px-2 py-1" style="font-size: 0.65rem;">
+                                        @php
+                                            $type = strtolower($tx->type);
+                                        @endphp
+
+                                        @if($type === 'customer')
+                                            CUST
+                                        @elseif($type === 'adjustment')
+                                            ADJ
+                                        @else
+                                            {{ strtoupper($tx->type) }}
+                                        @endif
                                     </span>
                                 </td>
-                                <td>{{ $tx->purpose->title ?? '-' }}</td>
-                                <td class="text-truncate" style="max-width: 150px;" title="{{ $tx->remark_1 }}">{{ $tx->remark_1 ?? '-' }}</td>
-                                <td class="text-truncate" style="max-width: 150px;" title="{{ $tx->remark_2 }}">{{ $tx->remark_2 ?? '-' }}</td>
+                                <td class="small">{{ $tx->purpose->title ?? '-' }}</td>
+                                <td class="small text-truncate" style="max-width: 150px;" title="{{ $tx->remark_1 }}">{{ $tx->remark_1 ?? '-' }}</td>
+                                <td class="small text-truncate" style="max-width: 150px;" title="{{ $tx->remark_2 }}">{{ $tx->remark_2 ?? '-' }}</td>
+                                <td class="small text-muted">{{ $tx->created_at->format('d/m/Y H:i') }}</td>
                                 <td class="small text-muted">{{ ucfirst($tx->creator->username ?? '-') }}</td>
+                                <td class="text-center">
+                                    @if(\Carbon\Carbon::parse($tx->created_at)->isToday())
+                                        <div class="d-inline-block text-nowrap">
+                                            <!-- Edit Button -->
+                                            <a href="{{ route('transaction.edit', $tx->id) }}"
+                                            class="btn btn-sm btn-icon btn-text-secondary rounded-pill waves-effect me-1"
+                                            onclick="showLoading()"
+                                            data-bs-toggle="tooltip"
+                                            data-bs-placement="top"
+                                            title="Edit Transaction">
+                                                <i class="bx bx-edit-alt fs-5"></i>
+                                            </a>
+
+                                            <!-- Delete Button -->
+                                            <button type="button"
+                                                    class="btn btn-sm btn-icon btn-text-danger rounded-pill waves-effect"
+                                                    style="color: red;"
+                                                    onclick="if(confirm('Are you sure you want to delete?')){ showLoading(); document.getElementById('delete-form-{{ $tx->id }}').submit(); }"
+                                                    data-bs-toggle="tooltip"
+                                                    data-bs-placement="top"
+                                                    title="Delete Transaction">
+                                                <i class="bx bx-trash fs-5"></i>
+                                            </button>
+
+                                            <!-- Hidden Delete Form -->
+                                            <form id="delete-form-{{ $tx->id }}" action="{{ route('transaction.destroy', $tx->id) }}" method="POST" style="display: none;">
+                                                @csrf
+                                                @method('DELETE')
+                                            </form>
+                                        </div>
+                                    @else
+                                        <span class="text-muted small">-</span>
+                                    @endif
+                                </td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="9" class="text-center py-3 text-muted">No transaction logs found for this month.</td>
+                                <td colspan="11" class="text-center py-3 text-muted">No transaction logs found for {{ $currentMonth }}.</td>
                             </tr>
                         @endforelse
                     </tbody>
                     <tfoot class="table-light fw-bold">
                         <tr>
-                            <td colspan="1" class="text-end">Monthly Total:</td>
+                            <td colspan="1" class="text-end">Total:</td>
                             <td class="text-success">+ {{ number_format($totalIn ?? 0, 2) }}</td>
                             <td class="text-danger">- {{ number_format($totalOut ?? 0, 2) }}</td>
-                            <td colspan="6"></td>
+                            <td colspan="8"></td>
                         </tr>
                     </tfoot>
                 </table>

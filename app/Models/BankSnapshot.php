@@ -23,4 +23,9 @@ class BankSnapshot extends Model
     {
         return $this->belongsTo(BankSetting::class, 'bank_setting_id');
     }
+
+    public function country()
+    {
+        return $this->belongsTo(Country::class, 'country_id');
+    }
 }

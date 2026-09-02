@@ -20,6 +20,21 @@
         </form>
     </div>
 
+    <div class="row mb-3">
+        <div class="col-md-6">
+            <div class="card bg-label-primary p-3">
+                <span>Total Count ({{ $currentMonth }}):</span>
+                <h4 class="fw-bold mb-0">{{ number_format($totalTableCount ?? 0) }}</h4>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card bg-label-dark p-3">
+                <span>Total Balance Amount ({{ $currentMonth }}):</span>
+                <h4 class="fw-bold mb-0">{{ number_format($totalTableBalance ?? 0, 2) }}</h4>
+            </div>
+        </div>
+    </div>
+
     <div class="card">
         <div class="card-body">
             <div class="table-responsive text-nowrap">
@@ -38,7 +53,7 @@
                             <tr>
                                 <td>{{ $setting->id }}</td>
                                 <td><strong>{{ $setting->owner_name }} - {{ $setting->bank->short_name ?? '-' }}</strong></td>
-                                <td>{{ number_format($setting->amount, 2) }}</td>
+                                <td>{{ number_format($setting->monthly_balance, 2) }}</td>
                                 <td>
                                     <span class="badge bg-label-primary">{{ $setting->month_transaction_count ?? 0 }}</span>
                                 </td>
@@ -52,10 +67,19 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="5" class="text-center">No bank accounts found for the current country scope.</td>
+                                <td colspan="5" class="text-center">No bank accounts found.</td>
                             </tr>
                         @endforelse
                     </tbody>
+
+                    <tfoot class="table-light fw-bold">
+                        <tr>
+                            <td colspan="2" class="text-end">Total Summary:</td>
+                            <td class="text-dark">{{ number_format($totalTableBalance ?? 0, 2) }}</td>
+                            <td><span class="badge bg-primary">{{ number_format($totalTableCount ?? 0) }}</span></td>
+                            <td></td>
+                        </tr>
+                    </tfoot>
                 </table>
             </div>
 

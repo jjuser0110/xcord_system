@@ -45,7 +45,7 @@ class CalculateDailyBanks extends Command
                     ],
                     [
                         'country_id'      => $setting->country_id,
-                        'capital'         => $setting->capital,
+                        'capital'         => $setting->amount,
                     ]
                 );
                 $count++;

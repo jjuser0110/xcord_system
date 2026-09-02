@@ -8,4 +8,7 @@ Route::prefix('/transaction')->as('transaction.')->middleware(['auth'])->group(f
     Route::get('/create', 'TransactionController@create')->name('create');
     Route::post('/store', 'TransactionController@store')->name('store');
     Route::get('/log/{bank_setting}', 'TransactionController@log')->name('log');
+    Route::get('/edit/{transaction}', 'TransactionController@edit')->name('edit');
+    Route::post('/update/{transaction}', 'TransactionController@update')->name('update');
+    Route::get('/destroy/{transaction}', 'TransactionController@destroy')->name('destroy');
 });

@@ -64,7 +64,34 @@
                     name="description"
                     rows="4">{{$purpose->description??''}}</textarea>
                 </div> --}}
+                <!-- Provider Settlement Option Section -->
+                <!-- Provider Settlement Option Section -->
+                <hr>
+                <div class="col-12">
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" id="has_provider_settlement" name="has_provider_settlement" value="1"
+                            {{ (isset($purpose) && $purpose->has_provider_settlement) ? 'checked' : '' }}
+                            {{ (isset($hasTransactions) && $hasTransactions) ? 'disabled' : '' }} onchange="handleProviderChange()">
+                        <label class="form-check-label fw-bold text-dark" for="has_provider_settlement">
+                            Enable Provider Settlement for this Purpose
+                        </label>
+                        @if(isset($hasTransactions) && $hasTransactions)
+                            <div class="text-danger small mt-1">Provider settlement settings cannot be changed because transactions have already been recorded using this purpose.</div>
+                        @endif
+                    </div>
 
+                    <div class="mb-3" id="provider-name-container" style="{{ (isset($purpose) && $purpose->has_provider_settlement) ? '' : 'display: none;' }}">
+                        <label class="form-label" for="provider_name">Provider Name</label>
+                        <input
+                            type="text"
+                            class="form-control"
+                            placeholder="e.g. RM, FIUU"
+                            id="provider_name"
+                            name="provider_name"
+                            value="{{ $purpose->provider_name ?? '' }}"
+                            {{ (isset($hasTransactions) && $hasTransactions) ? 'readonly' : '' }} />
+                    </div>
+                </div>
                 <hr>
                 <div class="col-12">
                     <button type="submit" name="submitButton" class="btn btn-primary">Submit</button>
@@ -115,5 +142,20 @@
             handleCountryCheckboxChange();
         }
     });
+
+    function handleProviderChange() {
+        const isChecked = document.getElementById('has_provider_settlement').checked;
+        const container = document.getElementById('provider-name-container');
+        const inputField = document.getElementById('provider_name');
+
+        if (isChecked) {
+            container.style.display = 'block';
+            inputField.required = true;
+        } else {
+            container.style.display = 'none';
+            inputField.required = false;
+            inputField.value = '';
+        }
+    }
 </script>
 @endsection

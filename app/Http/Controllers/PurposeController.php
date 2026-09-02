@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Country;
+use App\Models\ProviderSettlement;
 use App\Models\Purpose;
 use App\Models\Transaction;
 use App\Traits\CountryScopeTrait;
@@ -53,16 +54,21 @@ class PurposeController extends Controller
             'title'         => 'required|string|max:255',
             'description'   => 'nullable|string',
             'is_global'     => 'nullable|boolean',
+            'has_provider_settlement' => 'nullable|boolean',
+            'provider_name' => 'nullable|required_if:has_provider_settlement,1|string|max:255',
             'country_ids'   => 'array',
             'country_ids.*' => 'exists:countries,id',
         ]);
 
         $isGlobal = $request->has('is_global') ? true : false;
+        $hasProvider = $request->has('has_provider_settlement') ? true : false;
 
         $purpose = Purpose::create([
             'title'         => $validated['title'],
             'description'   => $validated['description'] ?? null,
             'is_global'     => $isGlobal,
+            'has_provider_settlement' => $hasProvider,
+            'provider_name'           => $hasProvider ? $validated['provider_name'] : null,
             'created_by_id' => Auth::id(),
             'is_active'     => 1,
         ]);
@@ -81,26 +87,48 @@ class PurposeController extends Controller
 
         $selectedCountries = $purpose->countries->pluck('id')->toArray();
 
-        return view('purpose.create', compact('purpose', 'countries', 'disableCountry', 'selectedCountries'));
+        $hasTransactions = Transaction::where('purpose_id', $purpose->id)->exists()
+            || ProviderSettlement::where('purpose_id', $purpose->id)->exists();
+
+        return view('purpose.create', compact('purpose', 'countries', 'disableCountry', 'selectedCountries', 'hasTransactions'));
     }
 
     public function update(Request $request, Purpose $purpose)
     {
-        $validated = $request->validate([
+        $hasTransactions = Transaction::where('purpose_id', $purpose->id)->exists()
+            || ProviderSettlement::where('purpose_id', $purpose->id)->exists();
+
+        $rules = [
             'title'         => 'required|string|max:255',
             'description'   => 'nullable|string',
             'is_global'     => 'nullable|boolean',
             'country_ids'   => 'array',
             'country_ids.*' => 'exists:countries,id',
-        ]);
+        ];
+
+        // Only validate/allow changing provider settlement rules if no transactions exist yet
+        if (!$hasTransactions) {
+            $rules['has_provider_settlement'] = 'nullable|boolean';
+            $rules['provider_name'] = 'nullable|required_if:has_provider_settlement,1|string|max:255';
+        }
+
+        $validated = $request->validate($rules);
 
         $isGlobal = $request->has('is_global') ? true : false;
 
-        $purpose->update([
+        $updateData = [
             'title'       => $validated['title'],
             'description' => $validated['description'] ?? null,
             'is_global'   => $isGlobal,
-        ]);
+        ];
+
+        if (!$hasTransactions) {
+            $hasProvider = $request->has('has_provider_settlement') ? true : false;
+            $updateData['has_provider_settlement'] = $hasProvider;
+            $updateData['provider_name'] = $hasProvider ? $validated['provider_name'] : null;
+        }
+
+        $purpose->update($updateData);
 
         if ($isGlobal) {
             $purpose->countries()->detach();
