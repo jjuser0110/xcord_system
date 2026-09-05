@@ -5,6 +5,22 @@
     <h4 class="py-3 breadcrumb-wrapper mb-4">
         <span class="text-muted fw-light">Provider Settlement /</span> Listing
     </h4>
+    <div class="card mb-4">
+        <div class="card-body d-flex flex-column flex-md-row justify-content-between align-items-center gap-3">
+            <div>
+                <span class="text-muted small d-block mb-1">Total Settlement Amount ({{ $currentMonth }})</span>
+                <h3 class="fw-bold mb-0 {{ $totalSum >= 0 ? 'text-success' : 'text-danger' }}">
+                    {{ $totalSum >= 0 ? '+ ' : '- ' }}{{ number_format(abs($totalSum), 2) }}
+                </h3>
+            </div>
+
+            <!-- Month Filter Form Inside Card -->
+            <form method="GET" action="{{ route('provider_settlement.index') }}" class="d-flex align-items-center gap-2">
+                <label class="form-label mb-0 fw-semibold small text-nowrap">Filter Month:</label>
+                <input type="month" name="month" value="{{ $currentMonth }}" class="form-control form-control-sm" onchange="this.form.submit()">
+            </form>
+        </div>
+    </div>
 
     <div class="card">
         <div class="card-header d-flex justify-content-between align-items-center flex-column flex-md-row">
