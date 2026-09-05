@@ -510,7 +510,7 @@ class TransactionController extends Controller
     protected function rechainBankTransactions($bankSettingId)
     {
         $transactions = Transaction::where('bank_setting_id', $bankSettingId)
-            ->orderBy('transaction_date', 'asc')
+            ->orderBy('created_at', 'asc')
             ->orderBy('id', 'asc')
             ->get();
 

@@ -152,18 +152,13 @@
                                             <button type="button"
                                                     class="btn btn-sm btn-icon btn-text-danger rounded-pill waves-effect"
                                                     style="color: red;"
-                                                    onclick="if(confirm('Are you sure you want to delete?')){ showLoading(); document.getElementById('delete-form-{{ $tx->id }}').submit(); }"
+                                                    onclick="if(confirm('Are you sure you want to delete?')){ showLoading();window.location.href='{{ route('transaction.destroy',$tx) }}' }"
                                                     data-bs-toggle="tooltip"
                                                     data-bs-placement="top"
                                                     title="Delete Transaction">
                                                 <i class="bx bx-trash fs-5"></i>
                                             </button>
 
-                                            <!-- Hidden Delete Form -->
-                                            <form id="delete-form-{{ $tx->id }}" action="{{ route('transaction.destroy', $tx->id) }}" method="POST" style="display: none;">
-                                                @csrf
-                                                @method('DELETE')
-                                            </form>
                                         </div>
                                     @else
                                         <span class="text-muted small">-</span>
