@@ -12,6 +12,7 @@ use Bouncer;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
 
 // Master setting (open for superadmin only) TODO
 class BankController extends Controller
@@ -37,10 +38,19 @@ class BankController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'bank_name' => 'required|string|max:255|unique:banks,bank_name',
-            'short_name' => 'required|string|max:255|unique:banks,short_name',
+            'bank_name' => [
+                'required',
+                'string',
+                'max:255',
+                Rule::unique('banks', 'bank_name')->whereNull('deleted_at'),
+            ],
+            'short_name' => [
+                'required',
+                'string',
+                'max:255',
+                Rule::unique('banks', 'short_name')->whereNull('deleted_at'),
+            ],
             'country_id' => 'required|exists:countries,id',
-
         ]);
 
         Bank::create([
@@ -66,10 +76,19 @@ class BankController extends Controller
     public function update(Request $request, Bank $bank)
     {
         $validated = $request->validate([
-            'bank_name' => 'required|string|max:255|unique:banks,bank_name,' . $bank->id,
-            'short_name' => 'required|string|max:255|unique:banks,short_name,' . $bank->id,
+            'bank_name' => [
+                'required',
+                'string',
+                'max:255',
+                Rule::unique('banks', 'bank_name')->ignore($bank->id)->whereNull('deleted_at'),
+            ],
+            'short_name' => [
+                'required',
+                'string',
+                'max:255',
+                Rule::unique('banks', 'short_name')->ignore($bank->id)->whereNull('deleted_at'),
+            ],
             'country_id' => 'required|exists:countries,id',
-
         ]);
         $bank->update($validated);
         return redirect()->route('bank.index')->withSuccess('Data updated');
