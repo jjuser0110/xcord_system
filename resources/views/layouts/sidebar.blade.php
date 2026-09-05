@@ -4,7 +4,8 @@ $currentRoute = request()->route()->getName();
 
 // Define route groups for active states
 $isDashboard = Str::is('home*', $currentRoute);
-$isMasterSetting = Str::is(['country.*', 'bank.*', 'user.*', 'purpose.*', 'bank_setting.*', 'bank_phone_number.*'], $currentRoute);
+$isMasterSetting = Str::is(['country.*', 'bank.*', 'user.*', 'purpose.*', 'bank_setting.*'], $currentRoute);
+$isBankPhoneNumber = Str::is('bank_phone_number.*', $currentRoute);
 $isTransaction = Str::is('transaction.*', $currentRoute);
 $isProviderSettlement = Str::is('provider_settlement.*', $currentRoute);
 $isBankSnapshot = Str::is('bank_snapshot.*', $currentRoute);
@@ -79,14 +80,16 @@ $isBankSnapshot = Str::is('bank_snapshot.*', $currentRoute);
                         <div data-i18n="Bank Setting">Bank Setting</div>
                     </a>
                 </li>
-                <li class="menu-item {{ request()->routeIs('bank_phone_number.*') ? 'active' : '' }}">
-                    <a href="{{ route('bank_phone_number.index') }}" class="menu-link">
-                        <div data-i18n="Phone Number">Phone Number</div>
-                    </a>
-                </li>
             </ul>
         </li>
         @endif
+
+        <li class="menu-item {{ $isBankPhoneNumber ? 'active' : '' }}">
+            <a href="{{ route('bank_phone_number.index') }}" class="menu-link">
+                <i class="menu-icon tf-icons bx bx-phone"></i>
+                <div data-i18n="Phone Number">Phone Number</div>
+            </a>
+        </li>
 
         <!-- Transactions -->
         <li class="menu-item {{ $isTransaction ? 'active' : '' }}">

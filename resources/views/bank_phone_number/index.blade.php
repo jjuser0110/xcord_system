@@ -21,6 +21,7 @@
                             <th>Bank (Owner - Short Name)</th>
                             <th>Contact Number</th>
                             <th>Expired Date</th>
+                            <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -39,6 +40,13 @@
                                 @else
                                     -
                                 @endif
+                            </td>
+                            <td>
+                                <div class="d-inline-block text-nowrap">
+                                    <a href="{{ route('bank_phone_number.edit',$row) }}" class="btn btn-sm btn-icon item-edit me-4" onclick="showLoading()" title="Edit">
+                                        <i class="bx bx-edit-alt"></i>Edit
+                                    </a>
+                                </div>
                             </td>
                         </tr>
                         @endforeach

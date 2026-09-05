@@ -34,4 +34,23 @@ class BankPhoneNumberController extends Controller
 
         return view('bank_phone_number.index', compact('phoneNumbers'));
     }
+
+    public function edit(BankPhoneNumber $bank_phone_number)
+    {
+        return view('bank_phone_number.edit', compact('bank_phone_number'));
+    }
+
+    public function update(Request $request, BankPhoneNumber $bank_phone_number)
+    {
+        $request->validate([
+            'phone_number' => 'nullable|string|max:50',
+            'expired_date' => 'required_with:phone_number|nullable|date',
+        ]);
+
+        $bank_phone_number->update([
+            'phone_number' => $request->phone_number,
+            'expired_date' => $request->expired_date,
+        ]);
+
+        return redirect()->route('bank_phone_number.edit', $bank_phone_number->id)->with('success', 'Bank phone number updated successfully.');    }
 }
