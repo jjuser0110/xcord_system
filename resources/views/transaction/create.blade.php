@@ -69,10 +69,10 @@
 
                     <!-- Transaction Flow Type -->
                     <div class="col-md-4">
-                        <label class="form-label" for="type">Transaction Flow Type</label>
+                        <label class="form-label" for="type">Transaction Flow Type <span class="text-danger">*</span></label>
                         <select name="type" id="type" class="form-select {{ isset($transaction) ? 'bg-light' : '' }}" {{ isset($transaction) ? 'disabled' : 'required' }} onchange="handleTypeChange()">
-                            <option value="" disabled {{ !isset($transaction) ? 'selected' : '' }}>Select Flow Type</option>
-                            <option value="customer" {{ (isset($selectedBank) && !isset($transaction)) || (isset($transaction) && $transaction->type === 'customer') ? 'selected' : '' }}>Customer Transaction</option>
+                            <option value="" disabled {{ (!isset($transaction) && !old('type')) ? 'selected' : '' }}>Select Flow Type</option>
+                            <option value="customer" {{ (isset($transaction) && $transaction->type === 'customer') ? 'selected' : '' }}>Customer Transaction</option>
                             <option value="own" {{ (isset($transaction) && $transaction->type === 'own') ? 'selected' : '' }}>Own Account Transfer</option>
                         </select>
                         @if(isset($transaction))
@@ -82,8 +82,9 @@
 
                     <!-- Direction -->
                     <div class="col-md-4">
-                        <label class="form-label" for="transfer_direction">Direction (Bank In / Out)</label>
+                        <label class="form-label" for="transfer_direction">Direction (Bank In / Out) <span class="text-danger">*</span></label>
                         <select name="transfer_direction" id="transfer_direction" class="form-select {{ isset($transaction) ? 'bg-light' : '' }}" {{ isset($transaction) ? 'disabled' : 'required' }} onchange="handleTypeChange()">
+                            <option value="" disabled {{ (!isset($transaction) && !old('transfer_direction')) ? 'selected' : '' }}>Select Direction</option>
                             <option value="+" {{ (isset($transaction) && $transaction->transfer_direction === '+') ? 'selected' : '' }}>Plus (+) [Bank In]</option>
                             <option value="-" {{ (isset($transaction) && $transaction->transfer_direction === '-') ? 'selected' : '' }}>Minus (-) [Bank Out]</option>
                         </select>
@@ -275,7 +276,9 @@
         if (!typeElement) return;
 
         let type = typeElement.value;
-        let direction = document.getElementById('transfer_direction').value;
+        let directionElement = document.getElementById('transfer_direction');
+        let direction = directionElement ? directionElement.value : '';
+
         let customerFields = document.querySelectorAll('.customer-fields');
         let ownFields = document.querySelectorAll('.own-fields');
 
@@ -287,12 +290,18 @@
 
         let isEditMode = {{ isset($transaction) ? 'true' : 'false' }};
 
+        // If nothing is selected yet, hide both sections
+        if (!type || !direction) {
+            customerFields.forEach(el => el.style.display = 'none');
+            ownFields.forEach(el => el.style.display = 'none');
+            return;
+        }
+
         if (type === 'own') {
             customerFields.forEach(el => el.style.display = 'none');
             ownFields.forEach(el => el.style.display = 'block');
 
             if (direction === '+') {
-                // BANK IN: From = Counterpart (Bryan / target_bank_setting_id), To = Selected Bank (Sing Guy / bank_setting_id)
                 document.getElementById('label_source_bank').innerText = "From Bank Account (Bank Out -)";
                 document.getElementById('label_target_bank').innerText = "To Bank Account [Selected Bank] (Bank In +)";
 
@@ -325,7 +334,6 @@
                     targetDisplay.setAttribute('name', 'target_bank_id');
                 }
             } else {
-                // BANK OUT: From = Selected Bank (Sing Guy / bank_setting_id), To = Counterpart (Bryan / target_bank_setting_id)
                 document.getElementById('label_source_bank').innerText = "From Bank Account [Selected Bank] (Bank Out -)";
                 document.getElementById('label_target_bank').innerText = "To Bank Account (Bank In +)";
 
