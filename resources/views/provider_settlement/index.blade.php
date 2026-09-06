@@ -8,16 +8,19 @@
     <div class="card mb-4">
         <div class="card-body d-flex flex-column flex-md-row justify-content-between align-items-center gap-3">
             <div>
-                <span class="text-muted small d-block mb-1">Total Settlement Amount ({{ $currentMonth }})</span>
+                <span class="text-muted small d-block mb-1">Total Settlement Amount ({{ $currentDate ?: 'All Time' }})</span>
                 <h3 class="fw-bold mb-0 {{ $totalSum >= 0 ? 'text-success' : 'text-danger' }}">
                     {{ $totalSum >= 0 ? '+ ' : '- ' }}{{ number_format(abs($totalSum), 2) }}
                 </h3>
             </div>
 
-            <!-- Month Filter Form Inside Card -->
+            <!-- Date Filter Form Inside Card -->
             <form method="GET" action="{{ route('provider_settlement.index') }}" class="d-flex align-items-center gap-2">
-                <label class="form-label mb-0 fw-semibold small text-nowrap">Filter Month:</label>
-                <input type="month" name="month" value="{{ $currentMonth }}" class="form-control form-control-sm" onchange="this.form.submit()">
+                <label class="form-label mb-0 fw-semibold small text-nowrap">Filter Date:</label>
+                <input type="date" name="date" value="{{ $currentDate }}" class="form-control form-control-sm" onchange="this.form.submit()">
+                @if($currentDate)
+                    <a href="{{ route('provider_settlement.index') }}" class="btn btn-outline-secondary btn-sm text-nowrap">Reset</a>
+                @endif
             </form>
         </div>
     </div>
@@ -72,7 +75,7 @@
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="6" class="text-center py-3 text-muted">No provider settlements found.</td>
+                            <td colspan="7" class="text-center py-3 text-muted">No provider settlements found.</td>
                         </tr>
                         @endforelse
                     </tbody>
@@ -86,7 +89,7 @@
                         Showing {{ $settlements->firstItem() ?? 0 }} to {{ $settlements->lastItem() ?? 0 }} of {{ $settlements->total() }} entries
                     </div>
                     <div>
-                        {{ $settlements->links('pagination::bootstrap-5') }}
+                        {{ $settlements->withQueryString()->links('pagination::bootstrap-5') }}
                     </div>
                 </div>
             @endif

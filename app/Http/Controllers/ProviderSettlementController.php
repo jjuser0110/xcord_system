@@ -13,7 +13,7 @@ class ProviderSettlementController extends Controller
 
     public function index(Request $request)
     {
-        $currentMonth = $request->input('month', Carbon::now()->format('Y-m'));
+        $currentDate = $request->input('date', Carbon::now()->format('Y-m-d'));
         $query = ProviderSettlement::with([
             'transaction.bankSetting.bank',
             'purpose',
@@ -21,11 +21,9 @@ class ProviderSettlementController extends Controller
             'created_by'
         ])->orderBy('id', 'desc');
 
-        // Filter by month on created_at
-        if ($currentMonth) {
-            $startDate = Carbon::parse($currentMonth)->startOfMonth();
-            $endDate = Carbon::parse($currentMonth)->endOfMonth();
-            $query->whereBetween('created_at', [$startDate, $endDate]);
+        // Filter by exact date on created_at
+        if ($currentDate) {
+            $query->whereDate('created_at', $currentDate);
         }
 
         $this->scopeByCountry($query);
@@ -34,7 +32,7 @@ class ProviderSettlementController extends Controller
 
         $settlements = $query->paginate(50);
 
-        return view('provider_settlement.index', compact('settlements', 'currentMonth', 'totalSum'));
+        return view('provider_settlement.index', compact('settlements', 'currentDate', 'totalSum'));
     }
 
     public function show(ProviderSettlement $providerSettlement)
