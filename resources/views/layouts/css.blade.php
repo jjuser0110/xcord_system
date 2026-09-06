@@ -1,3 +1,29 @@
+<!-- Prevent flash of unstyled content / dark mode flash -->
+<!-- Prevent flash of unstyled content / dark mode flash -->
+<script>
+  (function() {
+    const savedTheme = localStorage.getItem('app_theme') || 'light';
+    let cssFolder = "{{ asset('assets/vendor/css/rtl/') }}/";
+
+    if (savedTheme === 'bordered-dark') {
+      document.write('<link rel="stylesheet" id="core-css-link" href="' + cssFolder + 'core-dark.css" />');
+      document.write('<link rel="stylesheet" id="theme-css-link" href="' + cssFolder + 'theme-bordered-dark.css" />');
+    } else if (savedTheme === 'default-dark') {
+      document.write('<link rel="stylesheet" id="core-css-link" href="' + cssFolder + 'core-dark.css" />');
+      document.write('<link rel="stylesheet" id="theme-css-link" href="' + cssFolder + 'theme-default-dark.css" />');
+    } else {
+      document.write('<link rel="stylesheet" id="core-css-link" href="' + cssFolder + 'core.css" />');
+      document.write('<link rel="stylesheet" id="theme-css-link" href="' + cssFolder + 'theme-default.css" />');
+    }
+
+    let activeTheme = savedTheme;
+    if (savedTheme === 'system') {
+      activeTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+
+  })();
+</script>
+
 <!-- Favicon -->
 <link rel="icon" type="image/x-icon" href="{{ asset('assets/img/favicon/favicon.ico') }}" />
 
@@ -14,8 +40,8 @@
 <link rel="stylesheet" href="{{ asset('assets/vendor/fonts/flag-icons.css') }}" />
 
 <!-- Core CSS -->
-<link rel="stylesheet" href="{{ asset('assets/vendor/css/rtl/core.css') }}" />
-<link rel="stylesheet" href="{{ asset('assets/vendor/css/rtl/theme-default.css') }}" />
+{{-- <link rel="stylesheet" id="core-css-link" href="{{ asset('assets/vendor/css/rtl/core.css') }}" />
+<link rel="stylesheet" id="theme-css-link" href="{{ asset('assets/vendor/css/rtl/theme-default.css') }}" /> --}}
 <link rel="stylesheet" href="{{ asset('assets/css/demo.css') }}" />
 
 <!-- Vendors CSS -->
@@ -45,7 +71,7 @@
 <!--? Template customizer: To hide customizer set displayCustomizer value false in config.js.  -->
 <script src="{{ asset('assets/vendor/js/template-customizer.js') }}"></script>
 <!--? Config:  Mandatory theme config file contain global vars & default theme options, Set your preferred theme option in this file.  -->
-<!-- <script src="{{ asset('assets/js/config.js') }}"></script> -->
+{{-- <script src="{{ asset('assets/js/config.js') }}"></script> --}}
 
 <style>
   #loading-screen {
