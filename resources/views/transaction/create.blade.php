@@ -31,7 +31,7 @@
 
     <div class="card">
         <div class="card-body">
-            <form action="{{ isset($transaction) ? route('transaction.update', $transaction->id) : route('transaction.store') }}" method="POST" id="transactionForm" onsubmit="return validateForm()">
+            <form action="{{ isset($transaction) ? route('transaction.update', $transaction->id) : route('transaction.store') }}" method="POST" id="transactionForm" onsubmit="return handleFormSubmit()">
                 @csrf
                 <!-- Pass selectedBank ID for JavaScript referencing -->
                 <input type="hidden" id="selected_bank_id_val" value="{{ $selectedBank->id ?? '' }}">
@@ -206,7 +206,7 @@
                 </div>
 
                 <div class="col-12 mt-4">
-                    <button type="submit" class="btn btn-primary">{{ isset($transaction) ? 'Update Transaction' : 'Save All Transactions' }}</button>
+                    <button type="submit" id="submitBtn" class="btn btn-primary">{{ isset($transaction) ? 'Update Transaction' : 'Save All Transactions' }}</button>
                     <a href="{{ isset($selectedBank) ? route('transaction.log', $selectedBank->id) : route('transaction.index') }}" class="btn btn-secondary">Cancel</a>
                 </div>
             </form>
@@ -449,5 +449,26 @@
         updateHeaderDisplay();
         updateRemoveButtons();
     });
+
+    function handleFormSubmit() {
+        // Run existing validation first
+        if (!validateForm()) {
+            return false;
+        }
+
+        // Reuse your existing global showLoading function
+        if (typeof showLoading === 'function') {
+            showLoading();
+        } else {
+            // Fallback safety net if showLoading isn't globally loaded on this page
+            let submitBtn = document.getElementById('submitBtn');
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.innerText = 'Saving...';
+            }
+        }
+
+        return true;
+    }
 </script>
 @endsection
