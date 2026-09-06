@@ -18,7 +18,10 @@ class Purpose extends Model
         'is_active',
         'is_global',
         'has_provider_settlement',
-        'provider_name'
+        'provider_name',
+        'show_on_received_from_provider',
+        'show_on_topup_to_provider',
+        'show_on_transfer_for_merchant',
     ];
 
     /**

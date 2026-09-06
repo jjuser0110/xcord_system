@@ -58,6 +58,9 @@ class PurposeController extends Controller
             'provider_name' => 'nullable|required_if:has_provider_settlement,1|string|max:255',
             'country_ids'   => 'array',
             'country_ids.*' => 'exists:countries,id',
+            'show_on_received_from_provider'=> 'nullable|boolean',
+            'show_on_topup_to_provider'     => 'nullable|boolean',
+            'show_on_transfer_for_merchant' => 'nullable|boolean',
         ]);
 
         $isGlobal = $request->has('is_global') ? true : false;
@@ -69,6 +72,9 @@ class PurposeController extends Controller
             'is_global'     => $isGlobal,
             'has_provider_settlement' => $hasProvider,
             'provider_name'           => $hasProvider ? $validated['provider_name'] : null,
+            'show_on_received_from_provider' => $request->has('show_on_received_from_provider'),
+            'show_on_topup_to_provider'      => $request->has('show_on_topup_to_provider'),
+            'show_on_transfer_for_merchant'  => $request->has('show_on_transfer_for_merchant'),
             'created_by_id' => Auth::id(),
             'is_active'     => 1,
         ]);
@@ -104,6 +110,9 @@ class PurposeController extends Controller
             'is_global'     => 'nullable|boolean',
             'country_ids'   => 'array',
             'country_ids.*' => 'exists:countries,id',
+            'show_on_received_from_provider'=> 'nullable|boolean',
+            'show_on_topup_to_provider'     => 'nullable|boolean',
+            'show_on_transfer_for_merchant' => 'nullable|boolean',
         ];
 
         // Only validate/allow changing provider settlement rules if no transactions exist yet
@@ -120,6 +129,9 @@ class PurposeController extends Controller
             'title'       => $validated['title'],
             'description' => $validated['description'] ?? null,
             'is_global'   => $isGlobal,
+            'show_on_received_from_provider' => $request->has('show_on_received_from_provider'),
+            'show_on_topup_to_provider'      => $request->has('show_on_topup_to_provider'),
+            'show_on_transfer_for_merchant'  => $request->has('show_on_transfer_for_merchant')
         ];
 
         if (!$hasTransactions) {

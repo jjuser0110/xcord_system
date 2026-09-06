@@ -92,12 +92,28 @@
     <div class="row">
         <div class="col-lg-8 mb-4">
             <div class="card h-100">
-                <div class="card-header d-flex align-items-center justify-content-between">
-                    <h5 class="card-title m-0 me-2">Monthly Capital Performance</h5>
+                <div class="card-header d-flex flex-wrap align-items-center justify-content-between gap-2">
+                    <h5 class="card-title m-0 me-2">Capital Performance Reports</h5>
+
+                    <!-- Flexible Filter Form (Date/Month Filter Only) -->
+                    <form method="GET" action="{{ route('home') }}" class="d-flex align-items-center gap-2 flex-wrap">
+                        <select name="filter_type" id="filter_type" class="form-select form-select-sm w-auto" onchange="this.form.submit()">
+                            <option value="month" {{ ($filterType ?? 'month') == 'month' ? 'selected' : '' }}>By Month</option>
+                            <option value="date_range" {{ ($filterType ?? '') == 'date_range' ? 'selected' : '' }}>By Date Range</option>
+                        </select>
+
+                        @if(($filterType ?? 'month') == 'month')
+                            <input type="month" name="month" value="{{ $currentMonth ?? now()->format('Y-m') }}" class="form-control form-control-sm w-auto" onchange="this.form.submit()">
+                        @else
+                            <input type="date" name="start_date" value="{{ $startDate ?? '' }}" class="form-control form-control-sm w-auto" onchange="this.form.submit()" placeholder="Start Date">
+                            <input type="date" name="end_date" value="{{ $endDate ?? '' }}" class="form-control form-control-sm w-auto" onchange="this.form.submit()" placeholder="End Date">
+                        @endif
+                    </form>
                 </div>
                 <div class="card-body">
                     <div class="row g-3">
-                        <div class="col-md-6 col-6">
+                        <!-- Total System Capital -->
+                        {{-- <div class="col-md-4 col-6">
                             <div class="d-flex align-items-center">
                                 <div class="avatar">
                                     <span class="avatar-initial rounded bg-label-primary text-primary"><i class="bx bx-pie-chart-alt"></i></span>
@@ -107,8 +123,10 @@
                                     <h5 class="mb-0 fw-semibold">{{ number_format($totalSystemCapital ?? 0, 2) }}</h5>
                                 </div>
                             </div>
-                        </div>
-                        <div class="col-md-6 col-6">
+                        </div> --}}
+
+                        <!-- Total Monthly Volume -->
+                        {{-- <div class="col-md-4 col-6">
                             <div class="d-flex align-items-center">
                                 <div class="avatar">
                                     <span class="avatar-initial rounded bg-label-success text-success"><i class="bx bx-transfer"></i></span>
@@ -116,6 +134,45 @@
                                 <div class="ms-3">
                                     <small class="text-muted d-block">Total Monthly Volume</small>
                                     <h5 class="mb-0 fw-semibold">{{ number_format($monthlyVolume ?? 0, 2) }}</h5>
+                                </div>
+                            </div>
+                        </div> --}}
+
+                        <!-- Transfer for Merchant -->
+                        <div class="col-md-4 col-6">
+                            <div class="d-flex align-items-center">
+                                <div class="avatar">
+                                    <span class="avatar-initial rounded bg-label-warning text-warning"><i class="bx bx-store"></i></span>
+                                </div>
+                                <div class="ms-3">
+                                    <small class="text-muted d-block">Transfer for Merchant</small>
+                                    <h5 class="mb-0 fw-semibold">{{ number_format($monthlyTransferForMerchant ?? 0, 2) }}</h5>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Received from Provider -->
+                        <div class="col-md-4 col-6">
+                            <div class="d-flex align-items-center">
+                                <div class="avatar">
+                                    <span class="avatar-initial rounded bg-label-info text-info"><i class="bx bx-down-arrow-circle"></i></span>
+                                </div>
+                                <div class="ms-3">
+                                    <small class="text-muted d-block">Received from Provider</small>
+                                    <h5 class="mb-0 fw-semibold">{{ number_format($monthlyReceiveFromProvider ?? 0, 2) }}</h5>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- TopUp to Provider -->
+                        <div class="col-md-4 col-6">
+                            <div class="d-flex align-items-center">
+                                <div class="avatar">
+                                    <span class="avatar-initial rounded bg-label-danger text-danger"><i class="bx bx-up-arrow-circle"></i></span>
+                                </div>
+                                <div class="ms-3">
+                                    <small class="text-muted d-block">TopUp to Provider</small>
+                                    <h5 class="mb-0 fw-semibold">{{ number_format($monthlyTopUpToProvider ?? 0, 2) }}</h5>
                                 </div>
                             </div>
                         </div>
@@ -130,10 +187,7 @@
                     <h5 class="card-title m-0">Quick Actions</h5>
                 </div>
                 <div class="card-body d-flex flex-column justify-content-around">
-                    <a href="{{ route('transaction.create') }}" class="btn btn-primary w-100 mb-2">
-                        <i class="bx bx-plus me-1"></i> New Transaction
-                    </a>
-                    <a href="{{ route('transaction.index') }}" class="btn btn-outline-secondary w-100">
+                    <a href="{{ route('transaction.index') }}" class="btn btn-primary w-100">
                         <i class="bx bx-list-ul me-1"></i> View Transaction Logs
                     </a>
                 </div>
@@ -153,11 +207,7 @@
                         @forelse($bankSettings as $bankSetting)
                             @php
                                 $bgColor = strtolower(trim($bankSetting->color ?? '#696cff'));
-
-                                // Define common light background keywords or hex codes
                                 $lightColors = ['white', '#ffffff', '#fff', '#f8f9fa', '#e9ecef', '#d1e7dd', '#fff3cd', '#f8d7da', '#cff4fc'];
-
-                                // Check if it's explicitly in our list, or starts with a light hex code pattern (rough brightness check or direct match)
                                 $isLightBg = in_array($bgColor, $lightColors) || str_starts_with($bgColor, '#f') || str_starts_with($bgColor, '#e');
                             @endphp
                             <div class="col-md-4 col-sm-6 mb-3">

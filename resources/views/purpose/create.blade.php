@@ -92,6 +92,39 @@
                             {{ (isset($hasTransactions) && $hasTransactions) ? 'readonly' : '' }} />
                     </div>
                 </div>
+                <div class="col-12" id="dashboard-mappings-container" style="{{ (isset($purpose) && $purpose->has_provider_settlement) ? '' : 'display: none;' }}">
+                    <hr>
+                    <label class="form-label fw-bold text-dark mb-2">Dashboard Report Mappings</label>
+                    <div class="row g-2">
+                        <div class="col-md-4">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="show_on_received_from_provider" name="show_on_received_from_provider" value="1"
+                                    {{ (isset($purpose) && $purpose->show_on_received_from_provider) ? 'checked' : '' }}>
+                                <label class="form-check-label" for="show_on_received_from_provider">
+                                    Dashboard Received from Provider
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="show_on_topup_to_provider" name="show_on_topup_to_provider" value="1"
+                                    {{ (isset($purpose) && $purpose->show_on_topup_to_provider) ? 'checked' : '' }}>
+                                <label class="form-check-label" for="show_on_topup_to_provider">
+                                    Dashboard Topup to Provider
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="show_on_transfer_for_merchant" name="show_on_transfer_for_merchant" value="1"
+                                    {{ (isset($purpose) && $purpose->show_on_transfer_for_merchant) ? 'checked' : '' }}>
+                                <label class="form-check-label" for="show_on_transfer_for_merchant">
+                                    Dashboard Transfer for Merchant
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
                 <hr>
                 <div class="col-12">
                     <button type="submit" name="submitButton" class="btn btn-primary">Submit</button>
@@ -141,20 +174,31 @@
         } else {
             handleCountryCheckboxChange();
         }
+
+        // Trigger on load to match initial state correctly
+        handleProviderChange();
     });
 
     function handleProviderChange() {
         const isChecked = document.getElementById('has_provider_settlement').checked;
         const container = document.getElementById('provider-name-container');
         const inputField = document.getElementById('provider_name');
+        const dashboardMappings = document.getElementById('dashboard-mappings-container');
 
         if (isChecked) {
             container.style.display = 'block';
+            dashboardMappings.style.display = 'block';
             inputField.required = true;
         } else {
             container.style.display = 'none';
+            dashboardMappings.style.display = 'none';
             inputField.required = false;
             inputField.value = '';
+
+            // Optionally uncheck the mappings if provider settlement is unchecked
+            document.getElementById('show_on_received_from_provider').checked = false;
+            document.getElementById('show_on_topup_to_provider').checked = false;
+            document.getElementById('show_on_transfer_for_merchant').checked = false;
         }
     }
 </script>
