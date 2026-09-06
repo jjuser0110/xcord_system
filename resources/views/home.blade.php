@@ -96,17 +96,17 @@
                     <h5 class="card-title m-0 me-2">Capital Performance Reports</h5>
 
                     <!-- Flexible Filter Form (Date/Month Filter Only) -->
-                    <form method="GET" action="{{ route('home') }}" class="d-flex align-items-center gap-2 flex-wrap">
-                        <select name="filter_type" id="filter_type" class="form-select form-select-sm w-auto" onchange="this.form.submit()">
+                    <form method="GET" action="{{ route('home') }}" id="dashboardFilterForm" class="d-flex align-items-center gap-2 flex-wrap">
+                        <select name="filter_type" id="filter_type" class="form-select form-select-sm w-auto" onchange="triggerFilterLoading()">
                             <option value="month" {{ ($filterType ?? 'month') == 'month' ? 'selected' : '' }}>By Month</option>
                             <option value="date_range" {{ ($filterType ?? '') == 'date_range' ? 'selected' : '' }}>By Date Range</option>
                         </select>
 
                         @if(($filterType ?? 'month') == 'month')
-                            <input type="month" name="month" value="{{ $currentMonth ?? now()->format('Y-m') }}" class="form-control form-control-sm w-auto" onchange="this.form.submit()">
+                            <input type="month" name="month" value="{{ $currentMonth ?? now()->format('Y-m') }}" class="form-control form-control-sm w-auto" onchange="triggerFilterLoading()">
                         @else
-                            <input type="date" name="start_date" value="{{ $startDate ?? '' }}" class="form-control form-control-sm w-auto" onchange="this.form.submit()" placeholder="Start Date">
-                            <input type="date" name="end_date" value="{{ $endDate ?? '' }}" class="form-control form-control-sm w-auto" onchange="this.form.submit()" placeholder="End Date">
+                            <input type="date" name="start_date" value="{{ $startDate ?? '' }}" class="form-control form-control-sm w-auto" onchange="triggerFilterLoading()" placeholder="Start Date">
+                            <input type="date" name="end_date" value="{{ $endDate ?? '' }}" class="form-control form-control-sm w-auto" onchange="triggerFilterLoading()" placeholder="End Date">
                         @endif
                     </form>
                 </div>
@@ -282,4 +282,12 @@
         </div>
     </div>
 </div>
+<script>
+function triggerFilterLoading() {
+    if (typeof showLoading === 'function') {
+        showLoading();
+    }
+    document.getElementById('dashboardFilterForm').submit();
+}
+</script>
 @endsection
