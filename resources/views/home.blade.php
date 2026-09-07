@@ -216,19 +216,19 @@
                                         <h6 class="mb-0 fw-bold {{ $isLightBg ? 'text-dark' : 'text-white' }}">
                                             {{ $bankSetting->bank->bank_name ?? 'Bank' }}
                                         </h6>
-                                        <small class="badge {{ $isLightBg ? 'bg-secondary text-white' : 'bg-dark bg-opacity-25 text-white' }}">
-                                            {{ $bankSetting->account_no }}
-                                        </small>
+                                        {{-- <small class="badge {{ $isLightBg ? 'bg-secondary text-white' : 'bg-dark bg-opacity-25 text-white' }}">
+                                            {{ $bankSetting->owner_name }}
+                                        </small> --}}
                                     </div>
 
                                     <p class="mb-2 small {{ $isLightBg ? 'text-muted' : 'text-white-50' }}">
-                                        {{ $bankSetting->holder_name ?? '' }}
+                                        {{ $bankSetting->owner_name ?? '' }}
                                     </p>
 
                                     <div class="mt-auto pt-2 border-top {{ $isLightBg ? 'border-secondary border-opacity-25' : 'border-light border-opacity-25' }}">
-                                        <small class="{{ $isLightBg ? 'text-muted' : 'text-white-50' }} d-block">Current Capital</small>
+                                        <small class="{{ $isLightBg ? 'text-muted' : 'text-white-50' }} d-block">Current Balance</small>
                                         <h3 class="mb-0 fw-semibold {{ $isLightBg ? 'text-dark' : 'text-white' }}">
-                                            {{ number_format($bankSetting->capital, 2) }}
+                                            {{ number_format($bankSetting->amount, 2) }}
                                         </h3>
                                     </div>
                                 </div>
