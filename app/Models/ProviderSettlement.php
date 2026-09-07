@@ -18,6 +18,8 @@ class ProviderSettlement extends Model
         'settlement_amount',
         'provider_name',
         'created_by_id',
+        'type',
+        'bank_setting_id'
     ];
 
     public function transaction()

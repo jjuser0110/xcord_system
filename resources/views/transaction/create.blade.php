@@ -72,7 +72,7 @@
                         <label class="form-label" for="type">Transaction Flow Type <span class="text-danger">*</span></label>
                         <select name="type" id="type" class="form-select {{ isset($transaction) ? 'bg-light' : '' }}" {{ isset($transaction) ? 'disabled' : 'required' }} onchange="handleTypeChange()">
                             <option value="" disabled {{ (!isset($transaction) && !old('type')) ? 'selected' : '' }}>Select Flow Type</option>
-                            <option value="customer" {{ (isset($transaction) && $transaction->type === 'customer') ? 'selected' : '' }}>Customer Transaction</option>
+                            <option value="customer" {{ (isset($transaction) && $transaction->type === 'customer') ? 'selected' : '' }}>External Transaction</option>
                             <option value="own" {{ (isset($transaction) && $transaction->type === 'own') ? 'selected' : '' }}>Own Account Transfer</option>
                         </select>
                         @if(isset($transaction))
@@ -183,7 +183,17 @@
                                     <select name="items[0][purpose_id]" class="form-select" required>
                                         <option value="" disabled selected>Select Purpose</option>
                                         @foreach($purposes as $purpose)
-                                            <option value="{{ $purpose->id }}">{{ $purpose->title }}</option>
+                                            @php
+                                                $label = $purpose->title;
+                                                if ($purpose->show_on_received_from_provider && $purpose->provider_name) {
+                                                    $label .= " (Received from Provider: {$purpose->provider_name})";
+                                                } elseif ($purpose->show_on_topup_to_provider && $purpose->provider_name) {
+                                                    $label .= " (Topup to Provider: {$purpose->provider_name})";
+                                                } elseif ($purpose->show_on_transfer_for_merchant) {
+                                                    $label .= " (Transfer for Merchant)";
+                                                }
+                                            @endphp
+                                            <option value="{{ $purpose->id }}">{{ $label }}</option>
                                         @endforeach
                                     </select>
                                 @endif
@@ -219,7 +229,20 @@
 
     function addRow() {
         let container = document.getElementById('transaction-rows-container');
-        let purposeOptions = `@foreach($purposes as $purpose)<option value="{{ $purpose->id }}">{{ $purpose->title }}</option>@endforeach`;
+
+        let purposeOptions = `@foreach($purposes as $purpose)
+            @php
+                $label = $purpose->title;
+                if ($purpose->show_on_received_from_provider && $purpose->provider_name) {
+                    $label .= " (Received from Provider: {$purpose->provider_name})";
+                } elseif ($purpose->show_on_topup_to_provider && $purpose->provider_name) {
+                    $label .= " (Topup to Provider: {$purpose->provider_name})";
+                } elseif ($purpose->show_on_transfer_for_merchant) {
+                    $label .= " (Transfer for Merchant)";
+                }
+            @endphp
+            <option value="{{ $purpose->id }}">{{ $label }}</option>
+        @endforeach`;
 
         let rowHtml = `
             <div class="row transaction-row g-2 mb-3 align-items-center border p-2 rounded bg-light">
@@ -246,6 +269,7 @@
                     <button type="button" class="btn btn-danger btn-sm remove-row-btn" onclick="removeRow(this)">X</button>
                 </div>
             </div>`;
+
         container.insertAdjacentHTML('beforeend', rowHtml);
         rowIndex++;
         updateRemoveButtons();

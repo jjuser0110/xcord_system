@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\Transaction;
 use App\Models\BankSetting;
 use App\Models\BankSnapshot;
+use App\Models\MerchantSettlement;
 use App\Models\ProviderSettlement;
 use App\Models\Purpose;
 use Illuminate\Support\Facades\Auth;
@@ -65,7 +66,7 @@ class HomeController extends Controller
         $this->scopeByCountry($bankSettingsQuery);
         $bankSettings = $bankSettingsQuery->get();
 
-        $monthlyMerchantTransferQuery = ProviderSettlement::query();
+        $monthlyMerchantTransferQuery = MerchantSettlement::query();
         $applyDateFilter($monthlyMerchantTransferQuery);
         $monthlyMerchantTransferQuery->whereHas('purpose', function($q) {
             $q->where('show_on_transfer_for_merchant', true);
