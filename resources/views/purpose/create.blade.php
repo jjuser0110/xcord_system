@@ -64,7 +64,7 @@
                             {{ (isset($purpose) && $purpose->has_provider_settlement) ? 'checked' : '' }}
                             {{ (isset($hasTransactions) && $hasTransactions) ? 'disabled' : '' }} onchange="handleProviderChange()">
                         <label class="form-check-label fw-bold text-dark" for="has_provider_settlement">
-                            Enable Provider Settlement for this Purpose
+                            Show on Provider IN/OUT
                         </label>
                         @if(isset($hasTransactions) && $hasTransactions)
                             <div class="text-danger small mt-1">Provider settlement settings cannot be changed because transactions have already been recorded using this purpose.</div>

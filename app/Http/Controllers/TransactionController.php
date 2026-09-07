@@ -7,6 +7,7 @@ use App\Models\Transaction;
 use App\Models\BankSetting;
 use App\Models\BankLog;
 use App\Models\BankSnapshot;
+use App\Models\MerchantSettlement;
 use App\Models\ProviderSettlement;
 use App\Models\Purpose;
 use App\Traits\CountryScopeTrait;
@@ -46,8 +47,6 @@ class TransactionController extends Controller
 
         foreach ($bankSettings as $setting) {
             $summary = $summaries->get($setting->id);
-
-            // If summary exists, use it; otherwise fallback dynamically for past un-synced data
             $setting->monthly_balance = $summary ? $summary->end_balance : 0.00;
             $setting->month_transaction_count = $summary ? $summary->transaction_count : 0;
         }
@@ -242,27 +241,10 @@ class TransactionController extends Controller
                         'created_by_id'          => Auth::id(),
                     ]);
 
-                    if ($purpose && $purpose->has_provider_settlement) {
-                        ProviderSettlement::create([
-                            'transaction_id'    => $sourceTransaction->id,
-                            'purpose_id'        => $purpose->id,
-                            'country_id'        => $sourceBank->country_id,
-                            'bank_name'         => $sourceBank->bank->bank_name ?? 'Bank',
-                            'settlement_amount' => -$amount,
-                            'provider_name'     => $purpose->provider_name,
-                            'created_by_id'     => Auth::id(),
-                        ]);
-
-                        // 2. Target Provider Settlement (Positive)
-                        ProviderSettlement::create([
-                            'transaction_id'    => $targetTransaction->id,
-                            'purpose_id'        => $purpose->id,
-                            'country_id'        => $targetBank->country_id,
-                            'bank_name'         => $targetBank->bank->bank_name ?? 'Bank',
-                            'settlement_amount' => $amount,
-                            'provider_name'     => $purpose->provider_name,
-                            'created_by_id'     => Auth::id(),
-                        ]);
+                    if ($sourceBank->id == $selectedBankId) {
+                        $this->handleSettlements($purpose, $sourceTransaction, $sourceBank, -$amount);
+                    } elseif ($targetBank->id == $selectedBankId) {
+                        $this->handleSettlements($purpose, $targetTransaction, $targetBank, $amount);
                     }
 
                     $affectedBanks[$sourceBank->id] = $closingMonth;
@@ -309,18 +291,8 @@ class TransactionController extends Controller
                         'created_by_id'          => Auth::id(),
                     ]);
 
-                    if ($purpose && $purpose->has_provider_settlement) {
-                        $multiplier = ($direction === '+') ? 1 : -1;
-                        ProviderSettlement::create([
-                            'transaction_id'    => $transaction->id,
-                            'purpose_id'        => $purpose->id,
-                            'country_id'        => $primaryBank->country_id,
-                            'bank_name'         => $primaryBank->bank->bank_name ?? 'Bank',
-                            'settlement_amount' => $amount * $multiplier,
-                            'provider_name'     => $purpose->provider_name,
-                            'created_by_id'     => Auth::id(),
-                        ]);
-                    }
+                    $multiplier = ($direction === '+') ? 1 : -1;
+                    $this->handleSettlements($purpose, $transaction, $primaryBank, $amount * $multiplier);
 
                     $affectedBanks[$primaryBank->id] = $closingMonth;
                 }
@@ -337,6 +309,43 @@ class TransactionController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
             return redirect()->back()->withInput()->with('error', 'Error: ' . $e->getMessage());
+        }
+    }
+
+    protected function handleSettlements($purpose, $transaction, $bank, $amountInFlow)
+    {
+        if (!$purpose) return;
+
+        // 1. Received from Provider or Topup to Provider -> Provider Settlement
+        if (($purpose->show_on_received_from_provider || $purpose->show_on_topup_to_provider) && $purpose->has_provider_settlement) {
+
+            // Determine type based on purpose configuration
+            $type = $purpose->show_on_received_from_provider ? 'in' : 'out';
+
+            ProviderSettlement::create([
+                'transaction_id'    => $transaction->id,
+                'purpose_id'        => $purpose->id,
+                'country_id'        => $bank->country_id,
+                'bank_setting_id'   => $bank->id, // <--- Track specific bank setting ID here
+                'bank_name'         => $bank->bank->bank_name ?? 'Bank',
+                'type'              => $type,
+                'settlement_amount' => $amountInFlow,
+                'provider_name'     => $purpose->provider_name,
+                'created_by_id'     => Auth::id(),
+            ]);
+        }
+
+        // 2. Transfer for Merchant -> Merchant Settlement
+        if ($purpose->show_on_transfer_for_merchant) {
+            MerchantSettlement::create([
+                'transaction_id'    => $transaction->id,
+                'purpose_id'        => $purpose->id,
+                'country_id'        => $bank->country_id,
+                'bank_setting_id'   => $bank->id, // <--- Track specific bank setting ID here
+                'bank_name'         => $bank->bank->bank_name ?? 'Bank',
+                'settlement_amount' => $amountInFlow,
+                'created_by_id'     => Auth::id(),
+            ]);
         }
     }
 
@@ -424,16 +433,19 @@ class TransactionController extends Controller
                     'remark_2' => $request->remark_2,
                 ]);
 
-                // Update related Provider Settlement record if applicable
-                $purpose = Purpose::find($tx->purpose_id);
-                if ($purpose && $purpose->has_provider_settlement) {
-                    $settlement = ProviderSettlement::where('transaction_id', $tx->id)->first();
-                    if ($settlement) {
-                        $multiplier = ($tx->transfer_direction === '+') ? 1 : -1;
-                        $settlement->update([
-                            'settlement_amount' => $newAmount * $multiplier
-                        ]);
-                    }
+                $multiplier = ($tx->transfer_direction === '+') ? 1 : -1;
+                $signedAmount = $newAmount * $multiplier;
+
+                // Update Provider Settlement
+                $providerSettlement = ProviderSettlement::where('transaction_id', $tx->id)->first();
+                if ($providerSettlement) {
+                    $providerSettlement->update(['settlement_amount' => $signedAmount]);
+                }
+
+                // Update Merchant Settlement
+                $merchantSettlement = MerchantSettlement::where('transaction_id', $tx->id)->first();
+                if ($merchantSettlement) {
+                    $merchantSettlement->update(['settlement_amount' => $signedAmount]);
                 }
 
                 $affectedBanks[$bank->id] = $closingMonth;
@@ -484,8 +496,9 @@ class TransactionController extends Controller
                 $bank->save();
                 $this->updateTodaySnapshot($bank);
 
-                // Delete associated provider settlements[cite: 39]
+                // Delete associated settlements
                 ProviderSettlement::where('transaction_id', $tx->id)->delete();
+                MerchantSettlement::where('transaction_id', $tx->id)->delete();
 
                 // Delete transaction record
                 $tx->delete();

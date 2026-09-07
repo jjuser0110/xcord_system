@@ -256,7 +256,6 @@
                             <thead>
                                 <tr>
                                     <th>Bank Name</th>
-                                    <th>Account No</th>
                                     <th>Recorded Capital</th>
                                     <th>Snapshot Date</th>
                                 </tr>
@@ -265,8 +264,7 @@
                                 @forelse($dailySnapshots as $snapshot)
                                     <tr>
                                         <td>{{ optional($snapshot->bankSetting->bank)->bank_name ?? 'N/A' }}</td>
-                                        <td>{{ optional($snapshot->bankSetting)->account_no ?? 'N/A' }}</td>
-                                        <td>{{ number_format($snapshot->capital, 2) }}</td>
+                                        <td>{{ number_format($snapshot->bankSetting->amount, 2) }}</td>
                                         <td>{{ $snapshot->snapshot_date }}</td>
                                     </tr>
                                 @empty

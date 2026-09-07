@@ -8,17 +8,35 @@
     <div class="card mb-4">
         <div class="card-body d-flex flex-column flex-md-row justify-content-between align-items-center gap-3">
             <div>
-                <span class="text-muted small d-block mb-1">Total Settlement Amount ({{ $currentDate ?: 'All Time' }})</span>
+                <span class="text-muted small d-block mb-1">
+                    Total Settlement Amount
+                    @if(isset($currentType) && $currentType) ({{ strtoupper($currentType) }}) @endif
+                    ({{ $currentDate ?: 'All Time' }})
+                </span>
                 <h3 class="fw-bold mb-0 {{ $totalSum >= 0 ? 'text-success' : 'text-danger' }}">
                     {{ $totalSum >= 0 ? '+ ' : '- ' }}{{ number_format(abs($totalSum), 2) }}
                 </h3>
             </div>
 
-            <!-- Date Filter Form Inside Card -->
-            <form method="GET" action="{{ route('provider_settlement.index') }}" class="d-flex align-items-center gap-2">
-                <label class="form-label mb-0 fw-semibold small text-nowrap">Filter Date:</label>
-                <input type="date" name="date" value="{{ $currentDate }}" class="form-control form-control-sm" onchange="this.form.submit()">
-                @if($currentDate)
+            <!-- Filter Form with Type Dropdown & Date -->
+            <form method="GET" action="{{ route('provider_settlement.index') }}" class="d-flex align-items-center gap-2 flex-wrap">
+                <!-- Type In/Out Dropdown Filter -->
+                <div class="d-flex align-items-center gap-1">
+                    <label class="form-label mb-0 fw-semibold small text-nowrap">Type:</label>
+                    <select name="type" class="form-select form-select-sm" onchange="this.form.submit()">
+                        <option value="">All In/Out</option>
+                        <option value="in" {{ (isset($currentType) && $currentType === 'in') ? 'selected' : '' }}>Provider In</option>
+                        <option value="out" {{ (isset($currentType) && $currentType === 'out') ? 'selected' : '' }}>Provider Out</option>
+                    </select>
+                </div>
+
+                <!-- Date Filter -->
+                <div class="d-flex align-items-center gap-1">
+                    <label class="form-label mb-0 fw-semibold small text-nowrap">Date:</label>
+                    <input type="date" name="date" value="{{ $currentDate }}" class="form-control form-control-sm" onchange="this.form.submit()">
+                </div>
+
+                @if($currentDate || $currentType)
                     <a href="{{ route('provider_settlement.index') }}" class="btn btn-outline-secondary btn-sm text-nowrap">Reset</a>
                 @endif
             </form>
@@ -37,6 +55,7 @@
                         <tr>
                             <th class="py-2">ID</th>
                             <th class="py-2">Bank Setting</th>
+                            <th class="py-2">Type</th>
                             <th class="py-2">Settlement</th>
                             <th class="py-2">Provider</th>
                             <th class="py-2">Created At</th>
@@ -59,6 +78,11 @@
                                     {{ $row->bank_name ?? '-' }}
                                 @endif
                             </td>
+                            <td>
+                                <span class="badge {{ $row->type === 'in' ? 'bg-label-success' : 'bg-label-warning' }}">
+                                    {{ strtoupper($row->type) }}
+                                </span>
+                            </td>
                             <td class="fw-bold {{ $row->settlement_amount >= 0 ? 'text-success' : 'text-danger' }}">
                                 {{ $row->settlement_amount >= 0 ? '+ ' : '- ' }}{{ number_format(abs($row->settlement_amount), 2) }}
                             </td>
@@ -75,7 +99,7 @@
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="7" class="text-center py-3 text-muted">No provider settlements found.</td>
+                            <td colspan="8" class="text-center py-3 text-muted">No provider settlements found.</td>
                         </tr>
                         @endforelse
                     </tbody>

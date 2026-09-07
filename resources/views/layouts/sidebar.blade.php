@@ -99,11 +99,11 @@ $isBankSnapshot = Str::is('bank_snapshot.*', $currentRoute);
             </a>
         </li>
 
-        <!-- Provider Settlement -->
+        <!-- Provider In/Out -->
         <li class="menu-item {{ $isProviderSettlement ? 'active' : '' }}">
             <a href="{{ route('provider_settlement.index') }}" class="menu-link">
                 <i class="menu-icon tf-icons bx bx-receipt"></i>
-                <div data-i18n="Provider Settlement">Provider Settlement</div>
+                <div data-i18n="Provider In/Out">Provider In/Out</div>
             </a>
         </li>
 

@@ -14,6 +14,8 @@ class ProviderSettlementController extends Controller
     public function index(Request $request)
     {
         $currentDate = $request->input('date', Carbon::now()->format('Y-m-d'));
+        $currentType = $request->input('type', ''); // Capture type filter (in / out)
+
         $query = ProviderSettlement::with([
             'transaction.bankSetting.bank',
             'purpose',
@@ -26,13 +28,18 @@ class ProviderSettlementController extends Controller
             $query->whereDate('created_at', $currentDate);
         }
 
+        // Filter by In / Out type column
+        if ($currentType && in_array($currentType, ['in', 'out'])) {
+            $query->where('type', $currentType);
+        }
+
         $this->scopeByCountry($query);
 
         $totalSum = (clone $query)->sum('settlement_amount');
 
         $settlements = $query->paginate(50);
 
-        return view('provider_settlement.index', compact('settlements', 'currentDate', 'totalSum'));
+        return view('provider_settlement.index', compact('settlements', 'currentDate', 'currentType', 'totalSum'));
     }
 
     public function show(ProviderSettlement $providerSettlement)
