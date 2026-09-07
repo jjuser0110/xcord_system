@@ -5,7 +5,7 @@
     <div class="container-xxl flex-grow-1 container-p-y">
         <h4 class="py-3 breadcrumb-wrapper mb-4"><span class="text-muted fw-light">Purpose </span></h4>
 
-        <!-- DataTable with Buttons -->
+        <!-- Table Card -->
         <div class="card">
             <div class="card-header flex-column flex-md-row">
                 <div class="head-label">
@@ -22,7 +22,7 @@
                 </div>
             </div>
             <div class="card-datatable text-nowrap">
-                <table class="dt-column-search table table-bordered" id="mytable">
+                <table class="table table-bordered" id="mytable">
                     <thead>
                         <tr>
                             <th>Purpose Title</th>
@@ -31,7 +31,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach($purpose as $row)
+                        @forelse($purpose as $row)
                         <tr>
                             <td>{{$row?->title??""}}</td>
                             <td>
@@ -57,9 +57,23 @@
                                 </div>
                             </td>
                         </tr>
-                        @endforeach
+                        @empty
+                        <tr>
+                            <td colspan="3" class="text-center">No records found.</td>
+                        </tr>
+                        @endforelse
                     </tbody>
                 </table>
+            </div>
+
+            <!-- Laravel Pagination Links -->
+            <div class="card-footer d-flex justify-content-between align-items-center">
+                <div class="text-muted">
+                    Showing {{ $purpose->firstItem() ?? 0 }} to {{ $purpose->lastItem() ?? 0 }} of {{ $purpose->total() }} entries
+                </div>
+                <div>
+                    {{ $purpose->links() }}
+                </div>
             </div>
         </div>
     </div>
@@ -70,14 +84,4 @@
 @endsection
 
 @section('scripts')
-  <script>
-    $(function(){
-      var table = $('#mytable').DataTable({
-        responsive: true,
-        pageLength: 10,
-        displayLength: 7,
-        lengthMenu: [7, 10, 25, 50, 75, 100],
-      });
-    });
-  </script>
 @endsection

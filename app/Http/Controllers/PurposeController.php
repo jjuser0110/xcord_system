@@ -31,7 +31,7 @@ class PurposeController extends Controller
             });
         }
 
-        $purpose = $query->latest()->get();
+        $purpose = $query->latest('created_at')->paginate(50);
 
         return view('purpose.index')->with('purpose', $purpose);
     }
