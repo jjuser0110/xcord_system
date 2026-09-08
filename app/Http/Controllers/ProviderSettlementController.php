@@ -14,7 +14,7 @@ class ProviderSettlementController extends Controller
     public function index(Request $request)
     {
         $currentDate = $request->input('date', Carbon::now()->format('Y-m-d'));
-        $currentType = $request->input('type', ''); // Capture type filter (in / out)
+        $currentType = $request->input('type', 'in');
 
         $query = ProviderSettlement::with([
             'transaction.bankSetting.bank',

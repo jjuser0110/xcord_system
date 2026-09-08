@@ -24,7 +24,6 @@
                 <div class="d-flex align-items-center gap-1">
                     <label class="form-label mb-0 fw-semibold small text-nowrap">Type:</label>
                     <select name="type" class="form-select form-select-sm" onchange="this.form.submit()">
-                        <option value="">All In/Out</option>
                         <option value="in" {{ (isset($currentType) && $currentType === 'in') ? 'selected' : '' }}>Provider In</option>
                         <option value="out" {{ (isset($currentType) && $currentType === 'out') ? 'selected' : '' }}>Provider Out</option>
                     </select>
