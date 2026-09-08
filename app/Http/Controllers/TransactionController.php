@@ -180,6 +180,13 @@ class TransactionController extends Controller
                     $amount = $item['amount'];
                     $purpose = Purpose::find($item['purpose_id']);
 
+                    if ($direction === '+' && !in_array($purpose->money_flow_type, ['bank_in', 'both'])) {
+                        throw new \Exception('The selected purpose "' . $purpose->title . '" is not permitted for Bank In transactions.');
+                    }
+                    if ($direction === '-' && !in_array($purpose->money_flow_type, ['bank_out', 'both'])) {
+                        throw new \Exception('The selected purpose "' . $purpose->title . '" is not permitted for Bank Out transactions.');
+                    }
+
                     // Lock both accounts to prevent race conditions and compute accurate balances
                     $sourceBank = BankSetting::where('id', $sourceBankId)->lockForUpdate()->firstOrFail();
                     $targetBank = BankSetting::where('id', $targetBankId)->lockForUpdate()->firstOrFail();

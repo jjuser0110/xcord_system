@@ -22,6 +22,7 @@ class Purpose extends Model
         'show_on_received_from_provider',
         'show_on_topup_to_provider',
         'show_on_transfer_for_merchant',
+        'money_flow_type'
     ];
 
     /**

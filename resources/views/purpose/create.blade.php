@@ -56,6 +56,43 @@
                     </div>
                 </div>
 
+                <!-- Money Flow Type Checkboxes -->
+                <div class="col-md-12 mb-3">
+                    <label class="form-label fw-bold d-block">Money Flow Type <span class="text-danger">*</span></label>
+                    <div class="d-flex gap-4">
+                        @php
+                            // Handle existing values whether stored as an array, string, or comma-separated/json
+                            $selectedFlows = old('money_flow_type', isset($purpose) ? (is_array($purpose->money_flow_type) ? $purpose->money_flow_type : [$purpose->money_flow_type]) : []);
+                            if(in_array('both', $selectedFlows)) {
+                                $selectedFlows = ['bank_in', 'bank_out']; // 'both' covers both directions
+                            }
+                        @endphp
+
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="money_flow_type[]" id="flow_bank_in" value="bank_in"
+                                {{ in_array('bank_in', $selectedFlows) ? 'checked' : '' }}
+                                {{ isset($purpose) ? 'disabled' : '' }}>
+                            <label class="form-check-label" for="flow_bank_in">Bank In</label>
+                        </div>
+
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="money_flow_type[]" id="flow_bank_out" value="bank_out"
+                                {{ in_array('bank_out', $selectedFlows) ? 'checked' : '' }}
+                                {{ isset($purpose) ? 'disabled' : '' }}>
+                            <label class="form-check-label" for="flow_bank_out">Bank Out</label>
+                        </div>
+                    </div>
+
+                    @if(isset($purpose))
+                        @foreach((array)$purpose->money_flow_type as $val)
+                            <input type="hidden" name="money_flow_type[]" value="{{ $val }}">
+                        @endforeach
+                        <small class="text-muted">Money flow type cannot be modified after creation.</small>
+                    @else
+                        <small class="text-muted">Select at least one money flow type.</small>
+                    @endif
+                </div>
+
                 <!-- Provider Settlement Option Section -->
                 <hr>
                 <div class="col-12">

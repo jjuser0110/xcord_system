@@ -173,14 +173,7 @@
                             <div class="col-md-3">
                                 <label class="form-label small">Purpose <span class="text-danger">*</span></label>
                                 @if(isset($transaction))
-                                    <select class="form-select bg-light" disabled>
-                                        @foreach($purposes as $purpose)
-                                            <option value="{{ $purpose->id }}" {{ $transaction->purpose_id == $purpose->id ? 'selected' : '' }}>{{ $purpose->title }}</option>
-                                        @endforeach
-                                    </select>
-                                    <input type="hidden" name="purpose_id" value="{{ $transaction->purpose_id }}">
-                                @else
-                                    <select name="items[0][purpose_id]" class="form-select" required>
+                                    <select name="items[0][purpose_id]" class="form-select purpose-select" required>
                                         <option value="" disabled selected>Select Purpose</option>
                                         @foreach($purposes as $purpose)
                                             @php
@@ -193,7 +186,26 @@
                                                     $label .= " (Transfer for Merchant)";
                                                 }
                                             @endphp
-                                            <option value="{{ $purpose->id }}">{{ $label }}</option>
+                                            <option value="{{ $purpose->id }}" data-flow-type="{{ $purpose->money_flow_type }}">{{ $label }}</option>
+                                        @endforeach
+                                    </select>
+                                    <input type="hidden" name="purpose_id" value="{{ $transaction->purpose_id }}">
+                                @else
+                                    {{-- Added class="form-select purpose-select" and data-flow-type attribute --}}
+                                    <select name="items[0][purpose_id]" class="form-select purpose-select" required>
+                                        <option value="" disabled selected>Select Purpose</option>
+                                        @foreach($purposes as $purpose)
+                                            @php
+                                                $label = $purpose->title;
+                                                if ($purpose->show_on_received_from_provider && $purpose->provider_name) {
+                                                    $label .= " (Received from Provider: {$purpose->provider_name})";
+                                                } elseif ($purpose->show_on_topup_to_provider && $purpose->provider_name) {
+                                                    $label .= " (Topup to Provider: {$purpose->provider_name})";
+                                                } elseif ($purpose->show_on_transfer_for_merchant) {
+                                                    $label .= " (Transfer for Merchant)";
+                                                }
+                                            @endphp
+                                            <option value="{{ $purpose->id }}" data-flow-type="{{ $purpose->money_flow_type }}">{{ $label }}</option>
                                         @endforeach
                                     </select>
                                 @endif
@@ -230,6 +242,7 @@
     function addRow() {
         let container = document.getElementById('transaction-rows-container');
 
+        // Added data-flow-type attribute to the options string
         let purposeOptions = `@foreach($purposes as $purpose)
             @php
                 $label = $purpose->title;
@@ -241,18 +254,18 @@
                     $label .= " (Transfer for Merchant)";
                 }
             @endphp
-            <option value="{{ $purpose->id }}">{{ $label }}</option>
+            <option value="{{ $purpose->id }}" data-flow-type="{{ $purpose->money_flow_type }}">{{ $label }}</option>
         @endforeach`;
 
         let rowHtml = `
             <div class="row transaction-row g-2 mb-3 align-items-center border p-2 rounded bg-light">
                 <div class="col-md-3">
                     <label class="form-label small">Amount <span class="text-danger">*</span></label>
-                    <input type="number" step="0.01" min="0.01" class="form-control" name="items[${rowIndex}][amount]" placeholder="0.00" required>
+                    <input type="number" step="0.01" min="0.01" max="999999999999.99" class="form-control" name="items[${rowIndex}][amount]" placeholder="0.00" required>
                 </div>
                 <div class="col-md-3">
                     <label class="form-label small">Purpose <span class="text-danger">*</span></label>
-                    <select name="items[${rowIndex}][purpose_id]" class="form-select" required>
+                    <select name="items[${rowIndex}][purpose_id]" class="form-select purpose-select" required>
                         <option value="" disabled selected>Select Purpose</option>
                         ${purposeOptions}
                     </select>
@@ -272,6 +285,10 @@
 
         container.insertAdjacentHTML('beforeend', rowHtml);
         rowIndex++;
+
+        // Immediately filter the newly added row's options based on the active direction
+        filterPurposeOptions();
+
         updateRemoveButtons();
     }
 
@@ -472,6 +489,7 @@
         handleTypeChange();
         updateHeaderDisplay();
         updateRemoveButtons();
+        filterPurposeOptions();
     });
 
     function handleFormSubmit() {
@@ -494,5 +512,41 @@
 
         return true;
     }
+
+    function filterPurposeOptions() {
+        let direction = document.getElementById('transfer_direction').value;
+        let purposeSelects = document.querySelectorAll('.purpose-select');
+
+        purposeSelects.forEach(select => {
+            let currentValue = select.value;
+            for (let option of select.options) {
+                if (!option.value) continue;
+                let flowType = option.getAttribute('data-flow-type');
+
+                if (direction === '+') {
+                    // Allow 'bank_in' and 'both'
+                    if (flowType === 'bank_in' || flowType === 'both') {
+                        option.style.display = 'block';
+                    } else {
+                        option.style.display = 'none';
+                        if (select.value === option.value) select.value = "";
+                    }
+                } else if (direction === '-') {
+                    // Allow 'bank_out' and 'both'
+                    if (flowType === 'bank_out' || flowType === 'both') {
+                        option.style.display = 'block';
+                    } else {
+                        option.style.display = 'none';
+                        if (select.value === option.value) select.value = "";
+                    }
+                } else {
+                    option.style.display = 'block';
+                }
+            }
+        });
+    }
+
+    // Hook filterPurposeOptions to direction change event
+    document.getElementById('transfer_direction').addEventListener('change', filterPurposeOptions);
 </script>
 @endsection

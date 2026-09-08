@@ -52,6 +52,8 @@ class PurposeController extends Controller
     {
         $validated = $request->validate([
             'title'         => 'required|string|max:255',
+            'money_flow_type'   => 'required|array|min:1',
+            'money_flow_type.*' => 'in:bank_in,bank_out',
             'description'   => 'nullable|string',
             'is_global'     => 'nullable|boolean',
             'has_provider_settlement' => 'nullable|boolean',
@@ -66,8 +68,16 @@ class PurposeController extends Controller
         $isGlobal = $request->has('is_global') ? true : false;
         $hasProvider = $request->has('has_provider_settlement') ? true : false;
 
+        $flows = $validated['money_flow_type'];
+        if (count($flows) > 1) {
+            $moneyFlowType = 'both';
+        } else {
+            $moneyFlowType = $flows[0];
+        }
+
         $purpose = Purpose::create([
             'title'         => $validated['title'],
+            'money_flow_type' => $moneyFlowType,
             'description'   => $validated['description'] ?? null,
             'is_global'     => $isGlobal,
             'has_provider_settlement' => $hasProvider,
