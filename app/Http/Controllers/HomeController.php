@@ -24,8 +24,6 @@ class HomeController extends Controller
 
     public function index(Request $request)
     {
-        $today = Carbon::today();
-
         // Support dynamic date range or monthly filters from request inputs
         $filterType = $request->input('filter_type', 'month'); // 'month' or 'date_range'
         $currentMonth = $request->input('month', Carbon::now()->format('Y-m'));
@@ -45,52 +43,59 @@ class HomeController extends Controller
             }
         };
 
-        // Standard Daily Metrics
-        $todayTransferToOwnQuery = Transaction::whereDate('created_at', $today)->where('type', 'own')->where('transfer_direction', '-');
-        $this->scopeByCountry($todayTransferToOwnQuery);
-        $todayTransferToOwn = $todayTransferToOwnQuery->sum('amount');
+        // 1. Transfer to Own Bank Metric
+        $transferToOwnQuery = Transaction::query();
+        $applyDateFilter($transferToOwnQuery);
+        $transferToOwnQuery->where('type', 'own')->where('transfer_direction', '-');
+        $this->scopeByCountry($transferToOwnQuery);
+        $transferToOwn = $transferToOwnQuery->sum('amount');
 
-        $todayReceiveFromOwnQuery = Transaction::whereDate('created_at', $today)->where('type', 'own')->where('transfer_direction', '+');
-        $this->scopeByCountry($todayReceiveFromOwnQuery);
-        $todayReceiveFromOwn = $todayReceiveFromOwnQuery->sum('amount');
+        // 2. Received from Own Bank Metric
+        $receiveFromOwnQuery = Transaction::query();
+        $applyDateFilter($receiveFromOwnQuery);
+        $receiveFromOwnQuery->where('type', 'own')->where('transfer_direction', '+');
+        $this->scopeByCountry($receiveFromOwnQuery);
+        $receiveFromOwn = $receiveFromOwnQuery->sum('amount');
 
-        $todayTransferToCustomerQuery = Transaction::whereDate('created_at', $today)->where('type', 'customer')->where('transfer_direction', '-');
-        $this->scopeByCountry($todayTransferToCustomerQuery);
-        $todayTransferToCustomer = $todayTransferToCustomerQuery->sum('amount');
+        // 3. Transfer for Merchant Metric
+        $transferForMerchantQuery = MerchantSettlement::query();
+        $applyDateFilter($transferForMerchantQuery);
+        $transferForMerchantQuery->whereHas('purpose', function($q) {
+            $q->where('show_on_transfer_for_merchant', true);
+        });
+        $this->scopeByCountry($transferForMerchantQuery);
+        $transferForMerchant = $transferForMerchantQuery->sum('settlement_amount');
 
-        $todayReceiveFromCustomerQuery = Transaction::whereDate('created_at', $today)->where('type', 'customer')->where('transfer_direction', '+');
-        $this->scopeByCountry($todayReceiveFromCustomerQuery);
-        $todayReceiveFromCustomer = $todayReceiveFromCustomerQuery->sum('amount');
+        // 4. Expenses Metric (Checking Purpose name/title explicitly)
+        $expensesQuery = Transaction::query();
+        $applyDateFilter($expensesQuery);
+        $expensesQuery->whereHas('purpose', function($q) {
+            $q->where('title', 'Expenses');
+        });
+        $this->scopeByCountry($expensesQuery);
+        $expenses = $expensesQuery->sum('amount');
+
+        // 5. Received from Provider Metric
+        $receiveFromProviderQuery = ProviderSettlement::query();
+        $applyDateFilter($receiveFromProviderQuery);
+        $receiveFromProviderQuery->whereHas('purpose', function($q) {
+            $q->where('show_on_received_from_provider', true);
+        });
+        $this->scopeByCountry($receiveFromProviderQuery);
+        $receiveFromProvider = $receiveFromProviderQuery->sum('settlement_amount');
+
+        // 6. TopUp to Provider Metric
+        $topUpToProviderQuery = ProviderSettlement::query();
+        $applyDateFilter($topUpToProviderQuery);
+        $topUpToProviderQuery->whereHas('purpose', function($q) {
+            $q->where('show_on_topup_to_provider', true);
+        });
+        $this->scopeByCountry($topUpToProviderQuery);
+        $topUpToProvider = $topUpToProviderQuery->sum('settlement_amount');
 
         $bankSettingsQuery = BankSetting::with('bank');
         $this->scopeByCountry($bankSettingsQuery);
         $bankSettings = $bankSettingsQuery->get();
-
-        $monthlyMerchantTransferQuery = MerchantSettlement::query();
-        $applyDateFilter($monthlyMerchantTransferQuery);
-        $monthlyMerchantTransferQuery->whereHas('purpose', function($q) {
-            $q->where('show_on_transfer_for_merchant', true);
-        });
-        $this->scopeByCountry($monthlyMerchantTransferQuery);
-        $monthlyTransferForMerchant = $monthlyMerchantTransferQuery->sum('settlement_amount');
-
-        // 2. Received from Provider Report Metric (Based on ProviderSettlement & Flag)
-        $monthlyReceiveFromProviderQuery = ProviderSettlement::query();
-        $applyDateFilter($monthlyReceiveFromProviderQuery);
-        $monthlyReceiveFromProviderQuery->whereHas('purpose', function($q) {
-            $q->where('show_on_received_from_provider', true);
-        });
-        $this->scopeByCountry($monthlyReceiveFromProviderQuery);
-        $monthlyReceiveFromProvider = $monthlyReceiveFromProviderQuery->sum('settlement_amount');
-
-        // 3. TopUp to Provider Report Metric (Based on ProviderSettlement & Flag)
-        $monthlyTopUpToProviderQuery = ProviderSettlement::query();
-        $applyDateFilter($monthlyTopUpToProviderQuery);
-        $monthlyTopUpToProviderQuery->whereHas('purpose', function($q) {
-            $q->where('show_on_topup_to_provider', true);
-        });
-        $this->scopeByCountry($monthlyTopUpToProviderQuery);
-        $monthlyTopUpToProvider = $monthlyTopUpToProviderQuery->sum('settlement_amount');
 
         $currentDate = Carbon::today()->toDateString();
         $dailySnapshotsQuery = BankSnapshot::with('bankSetting.bank')->where('snapshot_date', $currentDate);
@@ -98,14 +103,13 @@ class HomeController extends Controller
         $dailySnapshots = $dailySnapshotsQuery->get();
 
         return view('home', compact(
-            'todayTransferToOwn',
-            'todayReceiveFromOwn',
-            'todayTransferToCustomer',
-            'todayReceiveFromCustomer',
+            'transferToOwn',
+            'receiveFromOwn',
+            'transferForMerchant',
+            'expenses',
+            'receiveFromProvider',
+            'topUpToProvider',
             'bankSettings',
-            'monthlyTransferForMerchant',
-            'monthlyReceiveFromProvider',
-            'monthlyTopUpToProvider',
             'dailySnapshots',
             'filterType',
             'currentMonth',

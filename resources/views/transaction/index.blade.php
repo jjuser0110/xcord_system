@@ -42,6 +42,7 @@
                     <thead>
                         <tr>
                             <th>ID</th>
+                            <th>Color</th>
                             <th>Bank Setting</th>
                             <th>Current Balance Amount</th>
                             <th>Count (This Month)</th>
@@ -49,10 +50,31 @@
                         </tr>
                     </thead>
                     <tbody>
+                        @php
+                            $paletteMap = [
+                                'white'      => ['hex' => '#ffffff', 'text' => '#333333'],
+                                'red'        => ['hex' => '#ff3e1d', 'text' => '#ffffff'],
+                                'pink'       => ['hex' => '#ffdbeb', 'text' => '#333333'],
+                                'blue'       => ['hex' => '#2a5d96', 'text' => '#ffffff'],
+                                'lightblue'  => ['hex' => '#7ad3ff', 'text' => '#333333'],
+                                'green'      => ['hex' => '#6aae46', 'text' => '#ffffff'],
+                                'lightgreen' => ['hex' => '#b1f08a', 'text' => '#333333'],
+                            ];
+                        @endphp
                         @forelse($bankSettings as $setting)
+                            @php
+                                $colorKey = strtolower(trim($setting->color ?? 'white'));
+                                $bgHex = $paletteMap[$colorKey]['hex'] ?? '#ffffff';
+                                $textHex = $paletteMap[$colorKey]['text'] ?? '#333333';
+                            @endphp
                             <tr>
                                 <td>{{ $setting->id }}</td>
-                                <td><strong>{{ $setting->owner_name }} - {{ $setting->bank->short_name ?? '-' }}</strong></td>
+                                <td>
+                                    <span class="badge" style="background-color: {{ $bgHex }}; color: {{ $textHex }}; border: 1px solid #ddd;">
+                                        {{ ucfirst($colorKey) }}
+                                    </span>
+                                </td>
+                                <td>{{ $setting->owner_name }} - {{ $setting->bank->short_name ?? '-' }}</td>
                                 <td>{{ number_format($setting->monthly_balance, 2) }}</td>
                                 <td>
                                     <span class="badge bg-label-primary">{{ $setting->month_transaction_count ?? 0 }}</span>
@@ -74,7 +96,7 @@
 
                     <tfoot class="table-light fw-bold">
                         <tr>
-                            <td colspan="2" class="text-end">Total Summary:</td>
+                            <td colspan="3" class="text-end">Total Summary:</td>
                             <td class="text-dark">{{ number_format($totalTableBalance ?? 0, 2) }}</td>
                             <td><span class="badge bg-primary">{{ number_format($totalTableCount ?? 0) }}</span></td>
                             <td></td>
