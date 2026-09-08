@@ -67,13 +67,18 @@ class HomeController extends Controller
         $transferForMerchant = $transferForMerchantQuery->sum('settlement_amount');
 
         // 4. Expenses Metric (Checking Purpose name/title explicitly)
+        // 4. Expenses Metric (Sum up when '+', deduct when '-')
         $expensesQuery = Transaction::query();
         $applyDateFilter($expensesQuery);
         $expensesQuery->whereHas('purpose', function($q) {
             $q->where('title', 'Expenses');
         });
         $this->scopeByCountry($expensesQuery);
-        $expenses = $expensesQuery->sum('amount');
+
+        // Sum up when '+', deduct when '-'
+        $expenses = $expensesQuery->get()->sum(function($tx) {
+            return $tx->transfer_direction === '+' ? $tx->amount : -$tx->amount;
+        });
 
         // 5. Received from Provider Metric
         $receiveFromProviderQuery = ProviderSettlement::query();

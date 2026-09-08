@@ -110,7 +110,7 @@
         <div class="col-lg-8 mb-4">
             <div class="card h-100">
                 <div class="card-header d-flex flex-wrap align-items-center justify-content-between gap-2">
-                    <h5 class="card-title m-0 me-2">Capital Performance Reports</h5>
+                    <h5 class="card-title m-0 me-2">Provider Reports</h5>
                 </div>
                 <div class="card-body">
                     <div class="row g-3">
@@ -163,7 +163,7 @@
         <div class="col-12">
             <div class="card mb-4">
                 <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="card-title m-0">Bank Accounts Capital Overview</h5>
+                    <h5 class="card-title m-0">Bank Accounts Overview</h5>
                 </div>
                 <div class="card-body">
                     <div class="row">
@@ -179,19 +179,17 @@
                                         <h6 class="mb-0 fw-bold {{ $isLightBg ? 'text-dark' : 'text-white' }}">
                                             {{ $bankSetting->bank->bank_name ?? 'Bank' }}
                                         </h6>
-                                        <small class="badge {{ $isLightBg ? 'bg-secondary text-white' : 'bg-dark bg-opacity-25 text-white' }}">
-                                            {{ $bankSetting->account_no }}
-                                        </small>
+
                                     </div>
 
                                     <p class="mb-2 small {{ $isLightBg ? 'text-muted' : 'text-white-50' }}">
-                                        {{ $bankSetting->holder_name ?? '' }}
+                                        {{ $bankSetting->owner_name ?? '' }}
                                     </p>
 
                                     <div class="mt-auto pt-2 border-top {{ $isLightBg ? 'border-secondary border-opacity-25' : 'border-light border-opacity-25' }}">
                                         <small class="{{ $isLightBg ? 'text-muted' : 'text-white-50' }} d-block">Current Capital</small>
                                         <h3 class="mb-0 fw-semibold {{ $isLightBg ? 'text-dark' : 'text-white' }}">
-                                            {{ number_format($bankSetting->capital, 2) }}
+                                            {{ number_format($bankSetting->amount, 2) }}
                                         </h3>
                                     </div>
                                 </div>
