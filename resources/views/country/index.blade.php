@@ -41,7 +41,7 @@
                                         <i class="bx bx-edit-alt"></i>Edit
                                     </a>
 
-                                    <button type="button" class="btn btn-sm btn-icon item-delete" style="color: red;" onclick="if(confirm('Are you sure you want to delete?')){showLoading();window.location.href='{{ route('country.destroy',$row) }}'}" title="Delete">
+                                    <button type="button" class="btn btn-label-danger btn-sm item-delete" onclick="if(confirm('Are you sure you want to delete?')){showLoading();window.location.href='{{ route('country.destroy',$row) }}'}" title="Delete">
                                         <i class="bx bx-trash"></i>Delete
                                     </button>
                                 </div>

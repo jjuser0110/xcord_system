@@ -150,8 +150,7 @@
 
                                             <!-- Delete Button -->
                                             <button type="button"
-                                                    class="btn btn-sm btn-icon btn-text-danger rounded-pill waves-effect"
-                                                    style="color: red;"
+                                                    class="btn btn-label-danger btn-sm btn-text-danger rounded-pill waves-effect"
                                                     onclick="if(confirm('Are you sure you want to delete?')){ showLoading();window.location.href='{{ route('transaction.destroy',$tx) }}' }"
                                                     data-bs-toggle="tooltip"
                                                     data-bs-placement="top"

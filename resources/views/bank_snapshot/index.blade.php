@@ -32,7 +32,7 @@
     <div class="row mb-3">
         <div class="col-md-4">
             <div class="card bg-label-primary p-3">
-                <span>Total Capital on {{ $selectedDate }}:</span>
+                <span>Total Current Balance on {{ $selectedDate }}:</span>
                 <h4 class="fw-bold mb-0 text-primary">{{ number_format($totalCapital ?? 0, 2) }}</h4>
             </div>
         </div>
@@ -48,7 +48,7 @@
                             <th class="py-2">#</th>
                             <th class="py-2">Bank Setting</th>
                             <th class="py-2">Snapshot Date</th>
-                            <th class="py-2">Capital</th>
+                            <th class="py-2">Current Balance</th>
                         </tr>
                     </thead>
                     <tbody>

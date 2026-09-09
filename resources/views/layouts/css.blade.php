@@ -5,10 +5,11 @@
     const savedTheme = localStorage.getItem('app_theme') || 'light';
     let cssFolder = "{{ asset('assets/vendor/css/rtl/') }}/";
 
+    // Added 'savedTheme === 'dark'' to this condition
     if (savedTheme === 'bordered-dark') {
       document.write('<link rel="stylesheet" id="core-css-link" href="' + cssFolder + 'core-dark.css" />');
       document.write('<link rel="stylesheet" id="theme-css-link" href="' + cssFolder + 'theme-bordered-dark.css" />');
-    } else if (savedTheme === 'default-dark') {
+    } else if (savedTheme === 'default-dark' || savedTheme === 'dark') {
       document.write('<link rel="stylesheet" id="core-css-link" href="' + cssFolder + 'core-dark.css" />');
       document.write('<link rel="stylesheet" id="theme-css-link" href="' + cssFolder + 'theme-default-dark.css" />');
     } else {
@@ -20,7 +21,6 @@
     if (savedTheme === 'system') {
       activeTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
     }
-
   })();
 </script>
 
