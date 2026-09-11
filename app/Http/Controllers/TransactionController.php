@@ -22,6 +22,13 @@ class TransactionController extends Controller
     use CountryScopeTrait;
     use HasMonthlySummary;
 
+    public function __construct()
+    {
+        // Apply the check to actions that modify data
+        $this->middleware(\App\Http\Middleware\CheckSnapshotRunning::class)
+            ->only(['store', 'update', 'destroy']);
+    }
+
     public function index(Request $request)
     {
         $currentMonth = $request->input('month', Carbon::now()->format('Y-m'));
@@ -195,13 +202,13 @@ class TransactionController extends Controller
                     $sourceStart = $sourceBank->amount;
                     $sourceEnd = $sourceStart - $amount;
                     $sourceBank->update(['amount' => $sourceEnd]);
-                    $this->updateTodaySnapshot($sourceBank);
+                    //$this->updateTodaySnapshot($sourceBank);
 
                     // 2. Calculate Target Bank (Inflow +)
                     $targetStart = $targetBank->amount;
                     $targetEnd = $targetStart + $amount;
                     $targetBank->update(['amount' => $targetEnd]);
-                    $this->updateTodaySnapshot($targetBank);
+                    //$this->updateTodaySnapshot($targetBank);
 
                     // Shared batch identifier reference
                     $batchUuid = Str::uuid();
@@ -276,7 +283,7 @@ class TransactionController extends Controller
                     }
 
                     $primaryBank->update(['amount' => $endBalance]);
-                    $this->updateTodaySnapshot($primaryBank);
+                    //$this->updateTodaySnapshot($primaryBank);
 
                     $transaction = Transaction::create([
                         'transaction_no'         => $txNo,
@@ -431,7 +438,7 @@ class TransactionController extends Controller
                     $bank->amount -= $diff;
                 }
                 $bank->save();
-                $this->updateTodaySnapshot($bank);
+                //$this->updateTodaySnapshot($bank);
 
                 // Update amount and remarks only (protecting locked fields)
                 $tx->update([
@@ -501,7 +508,7 @@ class TransactionController extends Controller
                     $bank->amount += $tx->amount;
                 }
                 $bank->save();
-                $this->updateTodaySnapshot($bank);
+                //$this->updateTodaySnapshot($bank);
 
                 // Delete associated settlements
                 ProviderSettlement::where('transaction_id', $tx->id)->delete();

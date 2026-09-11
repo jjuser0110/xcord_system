@@ -15,7 +15,7 @@
             <div class="row align-items-center justify-content-between g-3">
                 <div class="col-md-6">
                     <h5 class="fw-bold mb-1">Daily Bank Settings Balance</h5>
-                    <p class="text-muted small mb-0">Select a date to check historical bank snapshots.</p>
+                    <p class="text-muted small mb-0">Select a date to check historical account balances.</p>
                 </div>
 
                 <div class="col-md-6 text-md-end">
@@ -32,7 +32,7 @@
     <div class="row mb-3">
         <div class="col-md-4">
             <div class="card bg-label-primary p-3">
-                <span>Total Current Balance on {{ $selectedDate }}:</span>
+                <span>Total Balance on {{ $selectedDate }}:</span>
                 <h4 class="fw-bold mb-0 text-primary">{{ number_format($totalCapital ?? 0, 2) }}</h4>
             </div>
         </div>
@@ -47,24 +47,24 @@
                         <tr>
                             <th class="py-2">#</th>
                             <th class="py-2">Bank Setting</th>
-                            <th class="py-2">Snapshot Date</th>
+                            <th class="py-2">Reference Date</th>
                             <th class="py-2">Current Balance</th>
                         </tr>
                     </thead>
                     <tbody>
-                        @forelse($snapshots as $index => $snapshot)
+                        @forelse($bankSettings as $index => $setting)
                             <tr>
-                                <td>{{ $snapshots->firstItem() + $index }}</td>
-                                <td class="fw-bold">{{ $snapshot->bankSetting->owner_name }} - {{ $snapshot->bankSetting->bank->short_name ?? '-' }}</td>
-                                <td class="small text-muted">{{ $snapshot->snapshot_date }}</td>
+                                <td>{{ $bankSettings->firstItem() + $index }}</td>
+                                <td class="fw-bold">{{ $setting->owner_name }} - {{ $setting->bank->short_name ?? '-' }}</td>
+                                <td class="small text-muted">{{ $selectedDate }}</td>
                                 <td>
-                                    <span class="text-success fw-bold">{{ number_format($snapshot->capital, 2) }}</span>
+                                    <span class="text-success fw-bold">{{ number_format($setting->computed_balance, 2) }}</span>
                                 </td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="5" class="text-center py-4 text-muted">
-                                    No bank snapshots found for <strong>{{ $selectedDate }}</strong>. Make sure the cron job has run for this date.
+                                <td colspan="4" class="text-center py-4 text-muted">
+                                    No active bank settings found.
                                 </td>
                             </tr>
                         @endforelse
@@ -75,10 +75,10 @@
             <!-- Pagination -->
             <div class="mt-3 d-flex flex-wrap justify-content-between align-items-center gap-3">
                 <div class="text-muted small">
-                    Showing {{ $snapshots->firstItem() ?? 0 }} to {{ $snapshots->lastItem() ?? 0 }} of {{ $snapshots->total() }} entries
+                    Showing {{ $bankSettings->firstItem() ?? 0 }} to {{ $bankSettings->lastItem() ?? 0 }} of {{ $bankSettings->total() }} entries
                 </div>
                 <div>
-                    {{ $snapshots->appends(['date' => $selectedDate])->links('pagination::bootstrap-5') }}
+                    {{ $bankSettings->appends(['date' => $selectedDate])->links('pagination::bootstrap-5') }}
                 </div>
             </div>
         </div>

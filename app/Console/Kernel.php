@@ -22,7 +22,7 @@ class Kernel extends ConsoleKernel
 
     protected function schedule(Schedule $schedule)
     {
-        $schedule->command('app:calculate-daily-banks')->dailyAt('00:00');
+        $schedule->command('app:calculate-daily-banks')->dailyAt('23:59');
         // $schedule->command('app:calculate-daily-banks')->everyMinute();
     }
 

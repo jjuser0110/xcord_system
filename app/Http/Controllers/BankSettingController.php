@@ -21,6 +21,13 @@ class BankSettingController extends Controller
     use CountryScopeTrait;
     use HasMonthlySummary;
 
+    public function __construct()
+    {
+        // Apply the check to actions that modify data or amounts
+        $this->middleware(\App\Http\Middleware\CheckSnapshotRunning::class)
+            ->only(['store', 'update', 'updateAmount', 'destroy']);
+    }
+
     public function index(Request $request)
     {
         $query = BankSetting::with(['bank', 'country', 'phoneNumbers']);
@@ -117,7 +124,7 @@ class BankSettingController extends Controller
             ]);
 
             $this->refreshMonthlySummary($bankSetting->id, $closingMonth);
-            $this->updateTodaySnapshot($bankSetting);
+            //$this->updateTodaySnapshot($bankSetting);
         });
 
         return redirect()->route('bank_setting.index')->withSuccess('Bank account setting created successfully.');
@@ -187,7 +194,7 @@ class BankSettingController extends Controller
 
             // Update bank amount tracker
             $bank_setting->update(['amount' => $newBalance]);
-            $this->updateTodaySnapshot($bank_setting);
+            //$this->updateTodaySnapshot($bank_setting);
 
             // Default remark if empty
             $remarkText = !empty(trim($validated['remark'])) ? $validated['remark'] : 'Manual Balance Adjustment';
