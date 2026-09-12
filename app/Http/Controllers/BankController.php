@@ -31,7 +31,7 @@ class BankController extends Controller
     {
         $disableCountry = false;
         $countries = $this->getScopedCountriesForForm($disableCountry);
-        $disableCountry = false;
+
 
         return view('bank.create', compact('countries', 'disableCountry'));
     }

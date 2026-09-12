@@ -36,18 +36,18 @@
                 <div class="col-md-6">
                     <label class="form-label" for="country_id">Country</label>
                     <select name="country_id" id="country_id" class="form-select" required @if(isset($disableCountry) && $disableCountry) disabled @endif>
-                        <option value="" disabled {{ !isset($bank) ? 'selected' : '' }}>Select Country</option>
+                        <option value="" disabled {{ !isset($bank) && $countries->count() > 1 ? 'selected' : '' }}>Select Country</option>
                         @foreach($countries as $country)
                             <option value="{{ $country->id }}"
-                                {{ (isset($bank) && $bank->country_id == $country->id) ? 'selected' : '' }}>
+                                {{ (isset($bank) && $bank->country_id == $country->id) || (!isset($bank) && $countries->count() == 1) ? 'selected' : '' }}>
                                 {{ $country->name }}
                             </option>
                         @endforeach
                     </select>
 
                     @if(isset($disableCountry) && $disableCountry)
-                        {{-- Pass the actual bank's country_id instead of the first collection item --}}
-                        <input type="hidden" name="country_id" value="{{ $bank->country_id ?? '' }}">
+                        {{-- Pass the actual bank's country_id or fallback to the first scoped country's id --}}
+                        <input type="hidden" name="country_id" value="{{ $bank->country_id ?? ($countries->first()->id ?? '') }}">
                     @endif
                 </div>
 
