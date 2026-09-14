@@ -9,7 +9,7 @@
     <div class="row">
         <div class="col-12">
             <div class="card">
-            <h5 class="card-header">Bank Details Testing Testing</h5>
+            <h5 class="card-header">Bank Details</h5>
             <div class="card-body">
                 <form class="row g-3" enctype="multipart/form-data" @if (isset($bank)) method="post" action="{{ route('bank.update',$bank) }}" @else method="post" action="{{ route('bank.store') }}" @endif onsubmit="showLoading()">
                 @csrf
