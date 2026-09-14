@@ -29,6 +29,14 @@ class BankController extends Controller
 
     public function create()
     {
+        $activeCountryId = session('active_country_id');
+
+        dd([
+            'session_active_country_id' => $activeCountryId,
+            'is_numeric' => is_numeric($activeCountryId),
+            'country_found' => Country::find($activeCountryId)
+        ]);
+
         $disableCountry = false;
         $countries = $this->getScopedCountriesForForm($disableCountry);
 
