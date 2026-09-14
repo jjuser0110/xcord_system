@@ -13,7 +13,7 @@
                 </div>
                 <div class="dt-action-buttons text-end pt-3 pt-md-0">
                     <div class="dt-buttons">
-                        <a class="dt-button create-new btn btn-primary" type="button" href="{{route('bank.create')}}" onclick="showLoading()">
+                        <a class="dt-button create-new btn btn-primary" type="button" href="{{route('bank.create')}}" >
                             <span><i class="bx bx-plus me-sm-1"></i>
                                 <span class="d-none d-sm-inline-block">Add New Record</span>
                             </span>
