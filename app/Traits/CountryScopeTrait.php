@@ -38,6 +38,12 @@ trait CountryScopeTrait
     public function getScopedCountriesForForm(&$disableCountry)
     {
         $activeCountryId = session('active_country_id');
+
+        dd([
+            'session_active_country_id' => $activeCountryId,
+            'is_numeric' => is_numeric($activeCountryId),
+            'country_found' => Country::find($activeCountryId)
+        ]);
         $disableCountry = false;
 
         if ($activeCountryId !== 'no' && !empty($activeCountryId)) {
