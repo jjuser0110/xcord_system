@@ -109,19 +109,28 @@
                     <!-- Multiple Phone Numbers & Expiration Manager -->
                     <div class="col-12">
                         <div class="d-flex justify-content-between align-items-center mb-2">
-                            <label class="form-label fw-bold mb-0">Phone Numbers & Expiration Dates (Optional)</label>
+                            <label class="form-label fw-bold mb-0">Phone Numbers (Optional)</label>
                             <button type="button" class="btn btn-sm btn-outline-primary" onclick="addPhoneRow()">
                                 <i class="bx bx-plus"></i> Add Phone Row
                             </button>
                         </div>
                         <div id="phone-rows-container">
+                            @php $telcos = \App\Models\BankPhoneNumber::TELCOS; @endphp
                             @if(isset($bank_setting) && $bank_setting->phoneNumbers->count() > 0)
                                 @foreach($bank_setting->phoneNumbers as $index => $phone)
                                     <div class="row phone-row g-2 mb-2 align-items-center">
-                                        <div class="col-md-5">
+                                        <div class="col-md-3">
+                                            <select name="phones[{{ $index }}][telco]" class="form-select">
+                                                <option value="" disabled {{ empty($phone->telco) ? 'selected' : '' }}>Select Telco</option>
+                                                @foreach($telcos as $key => $label)
+                                                    <option value="{{ $key }}" {{ $phone->telco == $key ? 'selected' : '' }}>{{ $label }}</option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                        <div class="col-md-4">
                                             <input type="text" class="form-control" name="phones[{{ $index }}][phone_number]" placeholder="Phone Number (e.g. +60123456789)" value="{{ $phone->phone_number }}">
                                         </div>
-                                        <div class="col-md-5">
+                                        <div class="col-md-3">
                                             <input type="date" class="form-control" name="phones[{{ $index }}][expired_date]" value="{{ $phone->expired_date }}">
                                         </div>
                                         <div class="col-md-2">
@@ -131,10 +140,18 @@
                                 @endforeach
                             @else
                                 <div class="row phone-row g-2 mb-2 align-items-center">
-                                    <div class="col-md-5">
+                                    <div class="col-md-3">
+                                        <select name="phones[0][telco]" class="form-select">
+                                            <option value="" disabled selected>Select Telco</option>
+                                            @foreach($telcos as $key => $label)
+                                                <option value="{{ $key }}">{{ $label }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                    <div class="col-md-4">
                                         <input type="text" class="form-control" name="phones[0][phone_number]" placeholder="Phone Number (e.g. +60123456789)">
                                     </div>
-                                    <div class="col-md-5">
+                                    <div class="col-md-3">
                                         <input type="date" class="form-control" name="phones[0][expired_date]">
                                     </div>
                                     <div class="col-md-2">
@@ -193,10 +210,18 @@
         let container = document.getElementById('phone-rows-container');
         let rowHtml = `
             <div class="row phone-row g-2 mb-2 align-items-center">
-                <div class="col-md-5">
+                <div class="col-md-3">
+                    <select name="phones[${phoneIndex}][telco]" class="form-select" required>
+                        <option value="" disabled selected>Select Telco</option>
+                        @foreach(\App\Models\BankPhoneNumber::TELCOS as $key => $label)
+                            <option value="{{ $key }}">{{ $label }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="col-md-4">
                     <input type="text" class="form-control" name="phones[${phoneIndex}][phone_number]" placeholder="Phone Number">
                 </div>
-                <div class="col-md-5">
+                <div class="col-md-3">
                     <input type="date" class="form-control" name="phones[${phoneIndex}][expired_date]">
                 </div>
                 <div class="col-md-2">

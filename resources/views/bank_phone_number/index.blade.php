@@ -20,6 +20,7 @@
                         <tr>
                             <th>Bank (Owner - Short Name)</th>
                             <th>Contact Number</th>
+                            <th>Telco</th>
                             <th>Expired Date</th>
                             <th>Actions</th>
                         </tr>
@@ -32,6 +33,9 @@
                                 <span class="text-muted">{{ $row->bankSetting->bank->short_name ?? '-' }}</span>
                             </td>
                             <td>{{ $row->phone_number ?? '-' }}</td>
+                            <td>
+                                <span class="badge bg-label-info">{{ $row->telco ?? '-' }}</span>
+                            </td>
                             <td>
                                 @if($row->expired_date)
                                     <span class="{{ \Carbon\Carbon::parse($row->expired_date)->isPast() ? 'text-danger fw-bold' : '' }}">

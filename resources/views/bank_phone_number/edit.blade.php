@@ -36,6 +36,18 @@
                                 required />
                         </div>
 
+                        <div class="col-md-6">
+                            <label class="form-label" for="telco">Telco <span class="text-danger">*</span></label>
+                            <select name="telco" id="telco" class="form-select" required>
+                                <option value="" disabled>Select Telco</option>
+                                @foreach(\App\Models\BankPhoneNumber::TELCOS as $key => $label)
+                                    <option value="{{ $key }}" {{ old('telco', $bank_phone_number->telco) == $key ? 'selected' : '' }}>
+                                        {{ $label }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+
                         <!-- Expired Date -->
                         <div class="col-md-6">
                             <label class="form-label" for="expired_date">Expired Date</label>

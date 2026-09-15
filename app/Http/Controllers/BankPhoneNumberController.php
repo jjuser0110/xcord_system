@@ -43,11 +43,13 @@ class BankPhoneNumberController extends Controller
     public function update(Request $request, BankPhoneNumber $bank_phone_number)
     {
         $request->validate([
+            'telco'        => 'required|string|in:HOTLINK,UMOBILE,DIGI,TUNETALK,XOX,REDONE',
             'phone_number' => 'nullable|string|max:50',
             'expired_date' => 'required_with:phone_number|nullable|date',
         ]);
 
         $bank_phone_number->update([
+            'telco'        => $request->telco,
             'phone_number' => $request->phone_number,
             'expired_date' => $request->expired_date,
         ]);

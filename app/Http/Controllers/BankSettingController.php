@@ -72,6 +72,7 @@ class BankSettingController extends Controller
             'capital'                => 'required|numeric|min:0',
             'color'                  => 'required|string|max:50',
             'phones'                 => 'nullable|array',
+            'phones.*.telco'         => 'required_with:phones.*.phone_number|nullable|string|in:HOTLINK,UMOBILE,DIGI,TUNETALK,XOX,REDONE',
             'phones.*.phone_number'  => 'nullable|string|max:50',
             'phones.*.expired_date'  => 'required_with:phones.*.phone_number|nullable|date',
         ]);
@@ -95,6 +96,7 @@ class BankSettingController extends Controller
                     if (!empty($phoneData['phone_number'])) {
                         BankPhoneNumber::create([
                             'bank_setting_id' => $bankSetting->id,
+                            'telco'           => $phoneData['telco'],
                             'phone_number'    => $phoneData['phone_number'],
                             'expired_date'    => $phoneData['expired_date'],
                         ]);
@@ -151,6 +153,7 @@ class BankSettingController extends Controller
         $validated = $request->validate([
             'color'                  => 'required|string|max:50',
             'phones'                 => 'nullable|array',
+            'phones.*.telco'         => 'required_with:phones.*.phone_number|nullable|string|in:HOTLINK,UMOBILE,DIGI,TUNETALK,XOX,REDONE',
             'phones.*.phone_number'  => 'nullable|string|max:50',
             'phones.*.expired_date'  => 'required_with:phones.*.phone_number|nullable|date',
         ]);
@@ -168,6 +171,7 @@ class BankSettingController extends Controller
                     if (!empty($phoneData['phone_number'])) {
                         BankPhoneNumber::create([
                             'bank_setting_id' => $bank_setting->id,
+                            'telco'           => $phoneData['telco'],
                             'phone_number'    => $phoneData['phone_number'],
                             'expired_date'    => $phoneData['expired_date'],
                         ]);
