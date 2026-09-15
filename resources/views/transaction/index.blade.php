@@ -52,36 +52,36 @@
                     <tbody>
                         @php
                             $paletteMap = [
-                                'white'      => ['hex' => '#ffffff', 'text' => '#333333'],
+                                'white'      => ['hex' => '#ffffff', 'text' => '#000000'],
                                 'red'        => ['hex' => '#ff3e1d', 'text' => '#ffffff'],
-                                'pink'       => ['hex' => '#ffdbeb', 'text' => '#333333'],
+                                'pink'       => ['hex' => '#ffdbeb', 'text' => '#000000'],
                                 'blue'       => ['hex' => '#2a5d96', 'text' => '#ffffff'],
-                                'lightblue'  => ['hex' => '#7ad3ff', 'text' => '#333333'],
+                                'lightblue'  => ['hex' => '#7ad3ff', 'text' => '#000000'],
                                 'green'      => ['hex' => '#6aae46', 'text' => '#ffffff'],
-                                'lightgreen' => ['hex' => '#b1f08a', 'text' => '#333333'],
+                                'lightgreen' => ['hex' => '#b1f08a', 'text' => '#000000'],
                             ];
                         @endphp
                         @forelse($bankSettings as $setting)
                             @php
                                 $colorKey = strtolower(trim($setting->color ?? 'white'));
                                 $bgHex = $paletteMap[$colorKey]['hex'] ?? '#ffffff';
-                                $textHex = $paletteMap[$colorKey]['text'] ?? '#333333';
+                                $textHex = $paletteMap[$colorKey]['text'] ?? '#000000';
                             @endphp
-                            <tr>
-                                <td>{{ $setting->id }}</td>
+                            <tr style="background-color: {{ $bgHex }}; color: {{ $textHex }};">
+                                <td style="color: {{ $textHex }};">{{ $setting->id }}</td>
                                 <td>
-                                    <span class="badge" style="background-color: {{ $bgHex }}; color: {{ $textHex }}; border: 1px solid #ddd;">
+                                    <span class="badge" style="background-color: rgba(0,0,0,0.2); color: {{ $textHex }}; border: 1px solid {{ $textHex }};">
                                         {{ ucfirst($colorKey) }}
                                     </span>
                                 </td>
-                                <td>{{ $setting->owner_name }} - {{ $setting->bank->short_name ?? '-' }}</td>
-                                <td>{{ number_format($setting->monthly_balance, 2) }}</td>
+                                <td style="color: {{ $textHex }};">{{ $setting->owner_name }} - {{ $setting->bank->short_name ?? '-' }}</td>
+                                <td style="color: {{ $textHex }};">{{ number_format($setting->monthly_balance, 2) }}</td>
                                 <td>
                                     <span class="badge bg-label-primary">{{ $setting->month_transaction_count ?? 0 }}</span>
                                 </td>
                                 <td>
                                     <div class="d-inline-block text-nowrap">
-                                        <a href="{{ route('transaction.log', ['bank_setting' => $setting->id, 'month' => $currentMonth]) }}" class="btn btn-sm btn-icon item-edit me-4" onclick="showLoading()" title="View">
+                                        <a href="{{ route('transaction.log', ['bank_setting' => $setting->id, 'month' => $currentMonth]) }}" class="btn btn-sm btn-icon item-edit me-4" onclick="showLoading()" title="View" style="color: {{ $textHex }} !important;">
                                             <i class="bx bx-show me-1"></i> View
                                         </a>
                                     </div>

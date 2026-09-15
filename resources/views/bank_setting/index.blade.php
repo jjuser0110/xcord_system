@@ -31,36 +31,36 @@
                     <tbody>
                         @php
                             $paletteMap = [
-                                'white'      => ['hex' => '#ffffff', 'text' => '#000000'],
+                                'white'      => ['hex' => '#ffffff', 'text' => '#333333'],
                                 'red'        => ['hex' => '#ff3e1d', 'text' => '#ffffff'],
-                                'pink'       => ['hex' => '#ffdbeb', 'text' => '#000000'],
+                                'pink'       => ['hex' => '#ffdbeb', 'text' => '#333333'],
                                 'blue'       => ['hex' => '#2a5d96', 'text' => '#ffffff'],
-                                'lightblue'  => ['hex' => '#7ad3ff', 'text' => '#000000'],
+                                'lightblue'  => ['hex' => '#7ad3ff', 'text' => '#333333'],
                                 'green'      => ['hex' => '#6aae46', 'text' => '#ffffff'],
-                                'lightgreen' => ['hex' => '#b1f08a', 'text' => '#000000'],
+                                'lightgreen' => ['hex' => '#b1f08a', 'text' => '#333333'],
                             ];
                         @endphp
                         @forelse($bank_settings as $setting)
                         @php
                             $colorKey = strtolower(trim($setting->color ?? 'white'));
                             $bgHex = $paletteMap[$colorKey]['hex'] ?? '#ffffff';
-                            $textHex = $paletteMap[$colorKey]['text'] ?? '#000000';
+                            $textHex = $paletteMap[$colorKey]['text'] ?? '#333333';
                         @endphp
-                        <tr style="background-color: {{ $bgHex }}; color: {{ $textHex }};">
-                            <td style="color: {{ $textHex }};">{{ $setting->id }}</td>
+                            <tr>
+                            <td>{{ $setting->id }}</td>
                             <td>
-                                <span class="badge" style="background-color: rgba(0,0,0,0.2); color: {{ $textHex }}; border: 1px solid {{ $textHex }};">
+                                <span class="badge" style="background-color: {{ $bgHex }}; color: {{ $textHex }}; border: 1px solid #ddd;">
                                     {{ ucfirst($colorKey) }}
                                 </span>
                             </td>
                             <!-- Bank Account column format -->
-                            <td><strong style="color: {{ $textHex }};">{{ $setting->owner_name }} - {{ $setting->bank->short_name ?? '-' }} - {{ number_format($setting->amount, 2) }}</strong></td>
-                            <td style="color: {{ $textHex }};">{{ $setting->country->currency_code ?? '-' }}</td>
-                            <td style="color: {{ $textHex }};">{{ number_format($setting->capital, 2) }}</td>
+                            <td><strong>{{ $setting->owner_name }} - {{ $setting->bank->short_name ?? '-' }} - {{ number_format($setting->amount, 2) }}</strong></td>
+                            <td>{{ $setting->country->currency_code ?? '-' }}</td>
+                            <td>{{ number_format($setting->capital, 2) }}</td>
 
                             <!-- Clickable Amount Column to trigger adjustment modal -->
                             <td>
-                                <a href="javascript:void(0);" class="fw-bold text-primary text-decoration-underline" style="color: {{ $textHex }} !important;"
+                                <a href="javascript:void(0);" class="fw-bold text-primary text-decoration-underline"
                                    onclick="openAmountModal('{{ $setting->id }}', '{{ $setting->amount }}', '{{ $setting->owner_name }} - {{ $setting->bank->bank_name ?? '' }}')">
                                     {{ number_format($setting->amount, 2) }} <i class="bx bx-edit fs-small"></i>
                                 </a>
@@ -74,7 +74,7 @@
                             </td>
                             <td>
                                 <div class="d-inline-block text-nowrap">
-                                    <a href="{{ route('bank_setting.edit', $setting) }}" class="btn btn-sm btn-icon item-edit me-4" onclick="showLoading()" title="Edit" style="color: {{ $textHex }};">
+                                    <a href="{{ route('bank_setting.edit', $setting) }}" class="btn btn-sm btn-icon item-edit me-4" onclick="showLoading()" title="Edit">
                                         <i class="bx bx-edit-alt"></i>Edit
                                     </a>
 
