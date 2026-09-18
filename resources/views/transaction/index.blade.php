@@ -70,7 +70,7 @@
                             <tr style="background-color: {{ $bgHex }}; color: {{ $textHex }};">
                                 <td style="color: {{ $textHex }};">{{ $setting->id }}</td>
                                 <td>
-                                    <span class="badge" style="background-color: rgba(0,0,0,0.2); color: {{ $textHex }}; border: 1px solid {{ $textHex }};">
+                                    <span class="badge" style="background-color: {{ $bgHex }}; color: {{ $colorKey === 'white' || $colorKey === 'pink' || $colorKey === 'lightblue' || $colorKey === 'lightgreen' ? '#333333' : '#ffffff' }}; border: 1px solid rgba(0,0,0,0.1);">
                                         {{ ucfirst($colorKey) }}
                                     </span>
                                 </td>
