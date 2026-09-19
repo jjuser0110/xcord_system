@@ -23,7 +23,7 @@
 
                     <form class="row g-3" method="POST" action="{{ route('bank_phone_number.update', $bank_phone_number) }}" onsubmit="showLoading()">
                         @csrf
-
+                        <input type="hidden" name="page" value="{{ request('page') }}">
                         <!-- Contact Number -->
                         <div class="col-md-6">
                             <label class="form-label" for="phone_number">Contact Number <span class="text-danger">*</span></label>
@@ -62,7 +62,7 @@
                         <hr>
                         <div class="col-12">
                             <button type="submit" class="btn btn-primary">Update</button>
-                            <a href="{{ route('bank_phone_number.index') }}" class="btn btn-secondary">Cancel</a>
+                            <a href="{{ route('bank_phone_number.index', ['page' => request('page')]) }}" class="btn btn-secondary">Cancel</a>
                         </div>
                     </form>
                 </div>

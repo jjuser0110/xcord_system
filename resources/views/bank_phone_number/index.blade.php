@@ -15,7 +15,7 @@
                 </div>
             </div>
             <div class="card-datatable text-nowrap">
-                <table class="dt-column-search table table-bordered" id="mytable">
+                <table class="table table-bordered">
                     <thead>
                         <tr>
                             <th>Bank (Owner - Short Name)</th>
@@ -26,7 +26,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach($phoneNumbers as $row)
+                        @forelse($phoneNumbers as $row)
                         <tr>
                             <td>
                                 <strong>{{ $row->bankSetting->owner_name ?? '-' }}</strong> -
@@ -47,15 +47,24 @@
                             </td>
                             <td>
                                 <div class="d-inline-block text-nowrap">
-                                    <a href="{{ route('bank_phone_number.edit',$row) }}" class="btn btn-sm btn-icon item-edit me-4" onclick="showLoading()" title="Edit">
+                                    <a href="{{ route('bank_phone_number.edit', [$row, 'page' => request('page')]) }}" class="btn btn-sm btn-icon item-edit me-4" onclick="showLoading()" title="Edit">
                                         <i class="bx bx-edit-alt"></i>Edit
                                     </a>
                                 </div>
                             </td>
                         </tr>
-                        @endforeach
+                        @empty
+                        <tr>
+                            <td colspan="5" class="text-center">No phone numbers found.</td>
+                        </tr>
+                        @endforelse
                     </tbody>
                 </table>
+            </div>
+            <div class="card-footer d-flex justify-content-end align-items-center">
+                <div>
+                    {{ $phoneNumbers->links('pagination::bootstrap-5') }}
+                </div>
             </div>
         </div>
     </div>
@@ -66,14 +75,5 @@
 @endsection
 
 @section('scripts')
-  <script>
-    $(function(){
-      var table = $('#mytable').DataTable({
-        responsive: true,
-        pageLength: 10,
-        displayLength: 7,
-        lengthMenu: [7, 10, 25, 50, 75, 100],
-      });
-    });
-  </script>
+
 @endsection

@@ -54,5 +54,8 @@ class BankPhoneNumberController extends Controller
             'expired_date' => $request->expired_date,
         ]);
 
-        return redirect()->route('bank_phone_number.edit', $bank_phone_number->id)->with('success', 'Bank phone number updated successfully.');    }
+        $page = $request->input('page', 1);
+
+        return redirect()->route('bank_phone_number.index', ['page' => $page])->with('success', 'Bank phone number updated successfully.');
+    }
 }
