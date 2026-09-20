@@ -41,7 +41,7 @@
                 <table class="table table-bordered">
                     <thead>
                         <tr>
-                            <th>ID</th>
+                            <th>No.</th>
                             <th>Color</th>
                             <th>Bank Setting</th>
                             <th>Current Balance Amount</th>
@@ -61,14 +61,16 @@
                                 'lightgreen' => ['hex' => '#b1f08a', 'text' => '#000000'],
                             ];
                         @endphp
-                        @forelse($bankSettings as $setting)
+                        @forelse($bankSettings as $index => $setting)
                             @php
                                 $colorKey = strtolower(trim($setting->color ?? 'white'));
                                 $bgHex = $paletteMap[$colorKey]['hex'] ?? '#ffffff';
                                 $textHex = $paletteMap[$colorKey]['text'] ?? '#000000';
+
+                                $rowNumber = $bankSettings->total() - (($bankSettings->currentPage() - 1) * $bankSettings->perPage() + $loop->index);
                             @endphp
                             <tr style="background-color: {{ $bgHex }}; color: {{ $textHex }};">
-                                <td style="color: {{ $textHex }};">{{ $setting->id }}</td>
+                                <td style="color: {{ $textHex }};">{{ $rowNumber }}</td>
                                 <td>
                                     <span class="badge" style="background-color: {{ $bgHex }}; color: {{ $colorKey === 'white' || $colorKey === 'pink' || $colorKey === 'lightblue' || $colorKey === 'lightgreen' ? '#333333' : '#ffffff' }}; border: 1px solid rgba(0,0,0,0.1);">
                                         {{ ucfirst($colorKey) }}
@@ -107,10 +109,7 @@
 
             <!-- Pagination Links with Bootstrap 5 Style -->
             @if(method_exists($bankSettings, 'links'))
-                <div class="mt-4 d-flex justify-content-between align-items-center">
-                    <div class="text-muted small">
-                        Showing {{ $bankSettings->firstItem() ?? 0 }} to {{ $bankSettings->lastItem() ?? 0 }} of {{ $bankSettings->total() }} entries
-                    </div>
+                <div class="card-footer d-flex justify-content-end align-items-center">
                     <div>
                         {{ $bankSettings->appends(['month' => $currentMonth])->links('pagination::bootstrap-5') }}
                     </div>

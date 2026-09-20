@@ -181,16 +181,13 @@
                 </table>
             </div>
 
-            <!-- Pagination Links & Summary Footer -->
-            <div class="mt-3 d-flex flex-wrap justify-content-between align-items-center gap-3">
-                <div class="text-muted small">
-                    Showing {{ $transactions->firstItem() ?? 0 }} to {{ $transactions->lastItem() ?? 0 }} of {{ $transactions->total() }} entries
+            @if(method_exists($transactions, 'links'))
+                <div class="card-footer d-flex justify-content-end align-items-center">
+                    <div>
+                        {{ $transactions->appends(['month' => $currentMonth])->links('pagination::bootstrap-5') }}
+                    </div>
                 </div>
-
-                <div>
-                    {{ $transactions->appends(['month' => $currentMonth])->links('pagination::bootstrap-5') }}
-                </div>
-            </div>
+            @endif
         </div>
     </div>
 </div>
