@@ -18,7 +18,7 @@
                 <table class="table table-bordered">
                     <thead>
                         <tr>
-                            <th>ID</th>
+                            <th>No.</th>
                             <th>Color</th>
                             <th>Bank Account <small class="text-muted">(Owner - Bank - Amount)</small></th>
                             <th>Country</th>
@@ -45,9 +45,11 @@
                             $colorKey = strtolower(trim($setting->color ?? 'white'));
                             $bgHex = $paletteMap[$colorKey]['hex'] ?? '#ffffff';
                             $textHex = $paletteMap[$colorKey]['text'] ?? '#333333';
+
+                            $rowNumber = $bank_settings->count() - $loop->index;
                         @endphp
                             <tr>
-                            <td>{{ $setting->id }}</td>
+                            <td>{{ $rowNumber }}</td>
                             <td>
                                 <span class="badge" style="background-color: {{ $bgHex }}; color: {{ $textHex }}; border: 1px solid #ddd;">
                                     {{ ucfirst($colorKey) }}
