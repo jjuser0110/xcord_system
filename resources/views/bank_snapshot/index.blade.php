@@ -53,8 +53,11 @@
                     </thead>
                     <tbody>
                         @forelse($bankSettings as $index => $setting)
+                            @php
+                                $rowNumber = $bankSettings->total() - (($bankSettings->currentPage() - 1) * $bankSettings->perPage() + $loop->index);
+                            @endphp
                             <tr>
-                                <td>{{ $bankSettings->firstItem() + $index }}</td>
+                                <td>{{ $rowNumber }}</td>
                                 <td class="fw-bold">{{ $setting->owner_name }} - {{ $setting->bank->short_name ?? '-' }}</td>
                                 <td class="small text-muted">{{ $selectedDate }}</td>
                                 <td>
@@ -73,14 +76,13 @@
             </div>
 
             <!-- Pagination -->
-            <div class="mt-3 d-flex flex-wrap justify-content-between align-items-center gap-3">
-                <div class="text-muted small">
-                    Showing {{ $bankSettings->firstItem() ?? 0 }} to {{ $bankSettings->lastItem() ?? 0 }} of {{ $bankSettings->total() }} entries
+            @if(method_exists($bankSettings, 'links'))
+                <div class="card-footer d-flex justify-content-end align-items-center">
+                    <div>
+                        {{ $bankSettings->appends(['date' => $selectedDate])->links('pagination::bootstrap-5') }}
+                    </div>
                 </div>
-                <div>
-                    {{ $bankSettings->appends(['date' => $selectedDate])->links('pagination::bootstrap-5') }}
-                </div>
-            </div>
+            @endif
         </div>
     </div>
 </div>
