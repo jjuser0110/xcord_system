@@ -173,22 +173,7 @@
                             <div class="col-md-3">
                                 <label class="form-label small">Purpose <span class="text-danger">*</span></label>
                                 @if(isset($transaction))
-                                    <select name="items[0][purpose_id]" class="form-select purpose-select" required>
-                                        <option value="" disabled selected>Select Purpose</option>
-                                        @foreach($purposes as $purpose)
-                                            @php
-                                                $label = $purpose->title;
-                                                if ($purpose->show_on_received_from_provider && $purpose->provider_name) {
-                                                    $label .= " (Received from Provider: {$purpose->provider_name})";
-                                                } elseif ($purpose->show_on_topup_to_provider && $purpose->provider_name) {
-                                                    $label .= " (Topup to Provider: {$purpose->provider_name})";
-                                                } elseif ($purpose->show_on_transfer_for_merchant) {
-                                                    $label .= " (Transfer for Merchant)";
-                                                }
-                                            @endphp
-                                            <option value="{{ $purpose->id }}" data-flow-type="{{ $purpose->money_flow_type }}">{{ $label }}</option>
-                                        @endforeach
-                                    </select>
+                                    <input type="text" class="form-control bg-light" value="{{ $transaction->purpose->title ?? '' }}" readonly>
                                     <input type="hidden" name="purpose_id" value="{{ $transaction->purpose_id }}">
                                 @else
                                     {{-- Added class="form-select purpose-select" and data-flow-type attribute --}}

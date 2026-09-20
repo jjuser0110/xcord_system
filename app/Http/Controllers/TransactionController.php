@@ -109,19 +109,22 @@ class TransactionController extends Controller
         $userCountryId = Auth::user()->country_id ?? null;
 
         $purposesQuery = Purpose::query();
-        $purposesQuery->where(function ($q) use ($activeCountryId, $userCountryId) {
-            $q->where('is_global', 1);
 
-            if ($activeCountryId && $activeCountryId !== 'no') {
-                $q->orWhereHas('countries', function ($sub) use ($activeCountryId) {
-                    $sub->where('countries.id', $activeCountryId);
-                });
-            } elseif ($userCountryId) {
-                $q->orWhereHas('countries', function ($sub) use ($userCountryId) {
-                    $sub->where('countries.id', $userCountryId);
-                });
-            }
-        });
+        if($activeCountryId !== 'no') {
+            $purposesQuery->where(function ($q) use ($activeCountryId, $userCountryId) {
+                $q->where('is_global', 1);
+
+                if ($activeCountryId && $activeCountryId !== 'no') {
+                    $q->orWhereHas('countries', function ($sub) use ($activeCountryId) {
+                        $sub->where('countries.id', $activeCountryId);
+                    });
+                } elseif ($userCountryId) {
+                    $q->orWhereHas('countries', function ($sub) use ($userCountryId) {
+                        $sub->where('countries.id', $userCountryId);
+                    });
+                }
+            });
+        }
 
         $purposes = $purposesQuery->where('is_active', 1)->get();
 

@@ -64,8 +64,11 @@
                     </thead>
                     <tbody>
                         @forelse($settlements as $row)
+                        @php
+                            $rowNumber = $settlements->total() - (($settlements->currentPage() - 1) * $settlements->perPage() + $loop->index);
+                        @endphp
                         <tr>
-                            <td>{{ $row->id }}</td>
+                            <td>{{ $rowNumber }}</td>
                             <td>
                                 @php
                                     $bankSetting = $row->transaction?->bankSetting;
@@ -107,10 +110,7 @@
 
             <!-- Pagination Links & Entry Count Footer -->
             @if(method_exists($settlements, 'links'))
-                <div class="mt-3 d-flex flex-wrap justify-content-between align-items-center gap-3">
-                    <div class="text-muted small">
-                        Showing {{ $settlements->firstItem() ?? 0 }} to {{ $settlements->lastItem() ?? 0 }} of {{ $settlements->total() }} entries
-                    </div>
+                <div class="card-footer d-flex justify-content-end align-items-center">
                     <div>
                         {{ $settlements->withQueryString()->links('pagination::bootstrap-5') }}
                     </div>
