@@ -48,7 +48,7 @@ $isBankSnapshot = Str::is('bank_snapshot.*', $currentRoute);
         </li>
 
         <!-- Master Settings Dropdown (Hidden for Company Staff) -->
-        @if(auth()->check() && !auth()->user()->isAn('company_staff'))
+        @if(auth()->check() && auth()->user()->role_id == 1)
         <li class="menu-item {{ $isMasterSetting ? 'active open' : '' }}">
             <a href="javascript:void(0);" class="menu-link menu-toggle">
                 <i class="menu-icon tf-icons bx bx-cog"></i>
