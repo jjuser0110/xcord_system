@@ -142,16 +142,20 @@ class TransactionController extends Controller
             'transaction_date'       => 'required|date',
             'type'                   => 'required|in:own,customer',
             'transfer_direction'     => 'required|in:+,-',
-
-            // Allow nullable/exists checks flexibly without strict required_if traps
-            'source_bank_id'         => 'nullable|exists:bank_settings,id',
-            'target_bank_id'         => 'nullable|exists:bank_settings,id',
             'bank_setting_id'        => 'nullable|exists:bank_settings,id',
 
-            // Multi-row items validation
-            'items'                  => 'required|array|min:1',
-            'items.*.amount'         => 'required|numeric|min:0.01|max:999999999999.99',
-            'items.*.purpose_id'     => 'required|exists:purposes,id',
+            // Conditional validation rule arrays
+            'transfers'              => 'required_if:type,own|array',
+            'transfers.*.source_bank_id' => 'required_if:type,own|exists:bank_settings,id',
+            'transfers.*.target_bank_id' => 'required_if:type,own|exists:bank_settings,id',
+            'transfers.*.items'      => 'required_if:type,own|array|min:1',
+            'transfers.*.items.*.amount' => 'required_if:type,own|numeric|min:0.01|max:999999999999.99',
+            'transfers.*.items.*.purpose_id' => 'required_if:type,own|exists:purposes,id',
+
+            // Multi-row items validation for customer/external transactions
+            'items'                  => 'required_if:type,customer|array',
+            'items.*.amount'         => 'required_if:type,customer|numeric|min:0.01|max:999999999999.99',
+            'items.*.purpose_id'     => 'required_if:type,customer|exists:purposes,id',
             'items.*.remark_1'       => 'nullable|string',
             'items.*.remark_2'       => 'nullable|string',
         ]);
@@ -163,109 +167,125 @@ class TransactionController extends Controller
             $type = $request->type;
             $direction = $request->transfer_direction;
             $affectedBanks = [];
+            $selectedBankId = $request->input('bank_setting_id') ?? request()->route('bank_setting_id');
 
             if ($type === 'own') {
-                // Determine the selected page bank (the bank whose log you are currently viewing)
-                $selectedBankId = $request->input('bank_setting_id') ?? request()->route('bank_setting_id');
+                $transfers = $request->input('transfers', []);
 
-                if ($direction === '+') {
-                    // Bank In: Money flows FROM the chosen dropdown source account TO your selected bank account (Target)
-                    $sourceBankId = $request->source_bank_id;
-                    $targetBankId = $selectedBankId ?? $request->target_bank_id;
-                } else {
-                    // Bank Out: Money flows FROM your selected bank account (Source) TO the chosen dropdown target account
-                    $sourceBankId = $selectedBankId ?? $request->source_bank_id;
-                    $targetBankId = $request->target_bank_id;
-                }
-
-                // Ensure both source and target are present and different
-                if (!$sourceBankId || !$targetBankId) {
-                    throw new \Exception('Both source and target bank accounts must be selected.');
-                }
-                if ($sourceBankId == $targetBankId) {
-                    throw new \Exception('The source and target bank accounts cannot be the same.');
-                }
-
-                foreach ($request->items as $item) {
-                    $amount = $item['amount'];
-                    $purpose = Purpose::find($item['purpose_id']);
-
-                    if ($direction === '+' && !in_array($purpose->money_flow_type, ['bank_in', 'both'])) {
-                        throw new \Exception('The selected purpose "' . $purpose->title . '" is not permitted for Bank In transactions.');
-                    }
-                    if ($direction === '-' && !in_array($purpose->money_flow_type, ['bank_out', 'both'])) {
-                        throw new \Exception('The selected purpose "' . $purpose->title . '" is not permitted for Bank Out transactions.');
+                foreach ($transfers as $transfer) {
+                    if ($direction === '+') {
+                        // Bank In: 'from' must be target account (excluding selected bank), 'to' is selected bank
+                        $sourceBankId = $transfer['source_bank_id'];
+                        $targetBankId = $selectedBankId;
+                    } else {
+                        // Bank Out: 'from' is selected bank, 'to' must be target account (excluding selected bank)
+                        $sourceBankId = $selectedBankId;
+                        $targetBankId = $transfer['target_bank_id'];
                     }
 
-                    // Lock both accounts to prevent race conditions and compute accurate balances
-                    $sourceBank = BankSetting::where('id', $sourceBankId)->lockForUpdate()->firstOrFail();
-                    $targetBank = BankSetting::where('id', $targetBankId)->lockForUpdate()->firstOrFail();
-
-                    // 1. Calculate Source Bank (Outflow -)
-                    $sourceStart = $sourceBank->amount;
-                    $sourceEnd = $sourceStart - $amount;
-                    $sourceBank->update(['amount' => $sourceEnd]);
-                    //$this->updateTodaySnapshot($sourceBank);
-
-                    // 2. Calculate Target Bank (Inflow +)
-                    $targetStart = $targetBank->amount;
-                    $targetEnd = $targetStart + $amount;
-                    $targetBank->update(['amount' => $targetEnd]);
-                    //$this->updateTodaySnapshot($targetBank);
-
-                    // Shared batch identifier reference
-                    $batchUuid = Str::uuid();
-
-                    // --- TRANSACTION RECORD 1: Source Bank (Outflow) ---
-                    $sourceTransaction = Transaction::create([
-                        'transaction_no'         => 'TXN-OWN-OUT-' . $batchUuid,
-                        'transaction_date'       => $txDate,
-                        'country_id'             => $sourceBank->country_id,
-                        'bank_setting_id'        => $sourceBank->id,
-                        'type'                   => 'own',
-                        'target_bank_setting_id' => $targetBank->id,
-                        'transfer_direction'     => '-',
-                        'amount'                 => $amount,
-                        'start_balance'          => $sourceStart,
-                        'end_balance'            => $sourceEnd,
-                        'target_start_balance'   => $targetStart,
-                        'target_end_balance'     => $targetEnd,
-                        'purpose_id'             => $item['purpose_id'],
-                        'remark_1'               => $item['remark_1'] ?? null,
-                        'remark_2'               => $item['remark_2'] ?? null,
-                        'closing_month'          => $closingMonth,
-                        'created_by_id'          => Auth::id(),
-                    ]);
-
-                    // --- TRANSACTION RECORD 2: Target Bank (Inflow) ---
-                    $targetTransaction = Transaction::create([
-                        'transaction_no'         => 'TXN-OWN-IN-' . $batchUuid,
-                        'transaction_date'       => $txDate,
-                        'country_id'             => $targetBank->country_id,
-                        'bank_setting_id'        => $targetBank->id,
-                        'type'                   => 'own',
-                        'target_bank_setting_id' => $sourceBank->id,
-                        'transfer_direction'     => '+',
-                        'amount'                 => $amount,
-                        'start_balance'          => $targetStart,
-                        'end_balance'            => $targetEnd,
-                        'target_start_balance'   => $sourceStart,
-                        'target_end_balance'     => $sourceEnd,
-                        'purpose_id'             => $item['purpose_id'],
-                        'remark_1'               => $item['remark_1'] ?? null,
-                        'remark_2'               => $item['remark_2'] ?? null,
-                        'closing_month'          => $closingMonth,
-                        'created_by_id'          => Auth::id(),
-                    ]);
-
-                    if ($sourceBank->id == $selectedBankId) {
-                        $this->handleSettlements($purpose, $sourceTransaction, $sourceBank, -$amount);
-                    } elseif ($targetBank->id == $selectedBankId) {
-                        $this->handleSettlements($purpose, $targetTransaction, $targetBank, $amount);
+                    if (!$sourceBankId || !$targetBankId) {
+                        throw new \Exception('Both source and target bank accounts must be selected.');
+                    }
+                    if ($sourceBankId == $targetBankId) {
+                        throw new \Exception('The source and target bank accounts cannot be the same.');
                     }
 
-                    $affectedBanks[$sourceBank->id] = $closingMonth;
-                    $affectedBanks[$targetBank->id] = $closingMonth;
+                    // Ensure the selected account isn't improperly chosen where excluded
+                    if ($direction === '+' && $sourceBankId == $selectedBankId) {
+                        throw new \Exception('The source bank account cannot be the same as the selected bank account during a Bank In transfer.');
+                    }
+                    if ($direction === '-' && $targetBankId == $selectedBankId) {
+                        throw new \Exception('The target bank account cannot be the same as the selected bank account during a Bank Out transfer.');
+                    }
+
+                    $sourceBankMeta = BankSetting::find($sourceBankId);
+                    $targetBankMeta = BankSetting::find($targetBankId);
+
+                    foreach ($transfer['items'] as $item) {
+                        $amount = $item['amount'];
+                        $purpose = Purpose::find($item['purpose_id']);
+
+                        if ($direction === '+' && !in_array($purpose->money_flow_type, ['bank_in', 'both'])) {
+                            throw new \Exception('The selected purpose "' . $purpose->title . '" is not permitted for Bank In transactions.');
+                        }
+                        if ($direction === '-' && !in_array($purpose->money_flow_type, ['bank_out', 'both'])) {
+                            throw new \Exception('The selected purpose "' . $purpose->title . '" is not permitted for Bank Out transactions.');
+                        }
+
+                        // Lock both accounts
+                        $sourceBank = BankSetting::where('id', $sourceBankId)->lockForUpdate()->firstOrFail();
+                        $targetBank = BankSetting::where('id', $targetBankId)->lockForUpdate()->firstOrFail();
+
+                        $sourceStart = $sourceBank->amount;
+                        $sourceEnd = $sourceStart - $amount;
+                        $sourceBank->update(['amount' => $sourceEnd]);
+
+                        $targetStart = $targetBank->amount;
+                        $targetEnd = $targetStart + $amount;
+                        $targetBank->update(['amount' => $targetEnd]);
+
+                        $batchUuid = Str::uuid();
+
+                        // Auto generated Remarks based on direction/flow
+                        if ($direction === '+') {
+                            $sourceRemark = 'To ' . ($targetBankMeta ? $targetBankMeta->owner_name . ' - ' . optional($targetBankMeta->bank)->short_name : '');
+                            $targetRemark = 'From ' . ($sourceBankMeta ? $sourceBankMeta->owner_name . ' - ' . optional($sourceBankMeta->bank)->short_name : '');
+                        } else {
+                            $sourceRemark = 'To ' . ($targetBankMeta ? $targetBankMeta->owner_name . ' - ' . optional($targetBankMeta->bank)->short_name : '');
+                            $targetRemark = 'From '  . ($sourceBankMeta ? $sourceBankMeta->owner_name . ' - ' . optional($sourceBankMeta->bank)->short_name : '');
+                        }
+
+                        // --- TRANSACTION RECORD 1: Source Bank (Outflow) ---
+                        $sourceTransaction = Transaction::create([
+                            'transaction_no'         => 'TXN-OWN-OUT-' . $batchUuid,
+                            'transaction_date'       => $txDate,
+                            'country_id'             => $sourceBank->country_id,
+                            'bank_setting_id'        => $sourceBank->id,
+                            'type'                   => 'own',
+                            'target_bank_setting_id' => $targetBank->id,
+                            'transfer_direction'     => '-',
+                            'amount'                 => $amount,
+                            'start_balance'          => $sourceStart,
+                            'end_balance'            => $sourceEnd,
+                            'target_start_balance'   => $targetStart,
+                            'target_end_balance'     => $targetEnd,
+                            'purpose_id'             => $item['purpose_id'],
+                            'remark_1'               => $sourceRemark,
+                            'remark_2'               => $item['remark_2'] ?? null,
+                            'closing_month'          => $closingMonth,
+                            'created_by_id'          => Auth::id(),
+                        ]);
+
+                        // --- TRANSACTION RECORD 2: Target Bank (Inflow) ---
+                        $targetTransaction = Transaction::create([
+                            'transaction_no'         => 'TXN-OWN-IN-' . $batchUuid,
+                            'transaction_date'       => $txDate,
+                            'country_id'             => $targetBank->country_id,
+                            'bank_setting_id'        => $targetBank->id,
+                            'type'                   => 'own',
+                            'target_bank_setting_id' => $sourceBank->id,
+                            'transfer_direction'     => '+',
+                            'amount'                 => $amount,
+                            'start_balance'          => $targetStart,
+                            'end_balance'            => $targetEnd,
+                            'target_start_balance'   => $sourceStart,
+                            'target_end_balance'     => $sourceEnd,
+                            'purpose_id'             => $item['purpose_id'],
+                            'remark_1'               => $targetRemark,
+                            'remark_2'               => $item['remark_2'] ?? null,
+                            'closing_month'          => $closingMonth,
+                            'created_by_id'          => Auth::id(),
+                        ]);
+
+                        if ($sourceBank->id == $selectedBankId) {
+                            $this->handleSettlements($purpose, $sourceTransaction, $sourceBank, -$amount);
+                        } elseif ($targetBank->id == $selectedBankId) {
+                            $this->handleSettlements($purpose, $targetTransaction, $targetBank, $amount);
+                        }
+
+                        $affectedBanks[$sourceBank->id] = $closingMonth;
+                        $affectedBanks[$targetBank->id] = $closingMonth;
+                    }
                 }
 
             } else {
@@ -343,7 +363,7 @@ class TransactionController extends Controller
                 'transaction_id'    => $transaction->id,
                 'purpose_id'        => $purpose->id,
                 'country_id'        => $bank->country_id,
-                'bank_setting_id'   => $bank->id, // <--- Track specific bank setting ID here
+                'bank_setting_id'   => $bank->id,
                 'bank_name'         => $bank->bank->bank_name ?? 'Bank',
                 'type'              => $type,
                 'settlement_amount' => $amountInFlow,
@@ -373,34 +393,44 @@ class TransactionController extends Controller
             return redirect()->back()->with('error', 'Only transactions created today can be edited.');
         }
 
-        $query = BankSetting::with('bank');
-        $this->scopeByCountry($query);
-        $bankSettings = $query->get();
-
-        $selectedBank = BankSetting::with('bank')->find($transaction->bank_setting_id);
-
-        // Purpose filtering logic
-        $activeCountryId = session('active_country_id');
-        $userCountryId = Auth::user()->country_id ?? null;
-
-        $purposesQuery = Purpose::query();
-        $purposesQuery->where(function ($q) use ($activeCountryId, $userCountryId) {
-            $q->where('is_global', 1);
-
-            if ($activeCountryId && $activeCountryId !== 'no') {
-                $q->orWhereHas('countries', function ($sub) use ($activeCountryId) {
-                    $sub->where('countries.id', $activeCountryId);
-                });
-            } elseif ($userCountryId) {
-                $q->orWhereHas('countries', function ($sub) use ($userCountryId) {
-                    $sub->where('countries.id', $userCountryId);
-                });
-            }
-        });
-        $purposes = $purposesQuery->where('is_active', 1)->get();
-
-        return view('transaction.create', compact('bankSettings', 'purposes', 'selectedBank', 'transaction'));
+        return view('transaction.edit', compact('transaction'));
     }
+
+    // public function edit(Transaction $transaction)
+    // {
+    //     // Enforce "Today Only" edit rule
+    //     if (!Carbon::parse($transaction->created_at)->isToday()) {
+    //         return redirect()->back()->with('error', 'Only transactions created today can be edited.');
+    //     }
+
+    //     $query = BankSetting::with('bank');
+    //     $this->scopeByCountry($query);
+    //     $bankSettings = $query->get();
+
+    //     $selectedBank = BankSetting::with('bank')->find($transaction->bank_setting_id);
+
+    //     // Purpose filtering logic
+    //     $activeCountryId = session('active_country_id');
+    //     $userCountryId = Auth::user()->country_id ?? null;
+
+    //     $purposesQuery = Purpose::query();
+    //     $purposesQuery->where(function ($q) use ($activeCountryId, $userCountryId) {
+    //         $q->where('is_global', 1);
+
+    //         if ($activeCountryId && $activeCountryId !== 'no') {
+    //             $q->orWhereHas('countries', function ($sub) use ($activeCountryId) {
+    //                 $sub->where('countries.id', $activeCountryId);
+    //             });
+    //         } elseif ($userCountryId) {
+    //             $q->orWhereHas('countries', function ($sub) use ($userCountryId) {
+    //                 $sub->where('countries.id', $userCountryId);
+    //             });
+    //         }
+    //     });
+    //     $purposes = $purposesQuery->where('is_active', 1)->get();
+
+    //     return view('transaction.create', compact('bankSettings', 'purposes', 'selectedBank', 'transaction'));
+    // }
 
     public function update(Request $request, Transaction $transaction)
     {
@@ -446,7 +476,7 @@ class TransactionController extends Controller
                 // Update amount and remarks only (protecting locked fields)
                 $tx->update([
                     'amount'   => $newAmount,
-                    'remark_1' => $request->remark_1,
+                    'remark_1' => ($tx->type === 'own') ? $tx->remark_1 : $request->remark_1,
                     'remark_2' => $request->remark_2,
                 ]);
 
