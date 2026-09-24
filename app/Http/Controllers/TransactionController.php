@@ -386,14 +386,15 @@ class TransactionController extends Controller
         }
     }
 
-    public function edit(Transaction $transaction)
+    public function edit(Request $request, Transaction $transaction)
     {
+        $isView = $request->query('mode') === 'view';
         // Enforce "Today Only" edit rule
-        if (!Carbon::parse($transaction->created_at)->isToday()) {
+        if (!Carbon::parse($transaction->created_at)->isToday() && !$isView) {
             return redirect()->back()->with('error', 'Only transactions created today can be edited.');
         }
 
-        return view('transaction.edit', compact('transaction'));
+        return view('transaction.edit', compact('transaction', 'isView'));
     }
 
     // public function edit(Transaction $transaction)
@@ -610,5 +611,42 @@ class TransactionController extends Controller
                 'capital'         => $bankSetting->amount,
             ]
         );
+    }
+
+    public function filter(Request $request)
+    {
+        $currentMonth = $request->input('month', Carbon::now()->format('Y-m'));
+        $remark1 = $request->input('remark_1');
+        $remark2 = $request->input('remark_2');
+        $amount = $request->input('amount');
+
+        $query = Transaction::with(['purpose', 'creator', 'bankSetting.bank'])
+            ->where('closing_month', $currentMonth)
+            ->orderBy('id', 'desc');
+
+        // Apply country scope based on top navigation / session
+        $this->scopeByCountry($query);
+
+        if ($remark1) {
+            $query->where('remark_1', 'LIKE', '%' . $remark1 . '%');
+        }
+
+        if ($remark2) {
+            $query->where('remark_2', 'LIKE', '%' . $remark2 . '%');
+        }
+
+        if ($amount !== null && $amount !== '') {
+            $query->where('amount', $amount);
+        }
+
+        $transactions = $query->paginate(50);
+
+        return view('transaction.filter', compact(
+            'transactions',
+            'currentMonth',
+            'remark1',
+            'remark2',
+            'amount'
+        ));
     }
 }

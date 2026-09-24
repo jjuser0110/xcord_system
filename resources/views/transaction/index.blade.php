@@ -35,6 +35,32 @@
         </div>
     </div>
 
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="GET" action="{{ route('transaction.filter') }}" class="row g-3 align-items-end" id="searchForm">
+                <input type="hidden" name="month" value="{{ $currentMonth }}">
+                <div class="col-md-3">
+                    <label class="form-label">Remark 1</label>
+                    <input type="text" name="remark_1" id="search_remark_1" class="form-control form-control-sm search-input" value="{{ request('remark_1') }}" placeholder="Search Remark 1">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Remark 2</label>
+                    <input type="text" name="remark_2" id="search_remark_2" class="form-control form-control-sm search-input" value="{{ request('remark_2') }}" placeholder="Search Remark 2">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Amount</label>
+                    <input type="number" step="0.01" name="amount" id="search_amount" class="form-control form-control-sm search-input" value="{{ request('amount') }}" placeholder="0.00">
+                </div>
+                <div class="col-md-3 d-flex gap-2">
+                    <button type="submit" id="searchBtn" class="btn btn-primary btn-sm w-100" disabled>
+                        <i class="bx bx-search me-1"></i> Search
+                    </button>
+                    <a href="{{ route('transaction.index', ['month' => $currentMonth]) }}" class="btn btn-outline-secondary btn-sm">Reset</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <div class="card">
         <div class="card-body">
             <div class="table-responsive text-nowrap">
@@ -118,4 +144,21 @@
         </div>
     </div>
 </div>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const inputs = document.querySelectorAll('.search-input');
+        const searchBtn = document.getElementById('searchBtn');
+
+        function validateSearchForm() {
+            let filled = Array.from(inputs).some(input => input.value.trim() !== '');
+            searchBtn.disabled = !filled;
+        }
+
+        inputs.forEach(input => {
+            input.addEventListener('input', validateSearchForm);
+        });
+
+        validateSearchForm();
+    });
+</script>
 @endsection

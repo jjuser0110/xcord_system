@@ -8,20 +8,45 @@
             <nav aria-label="breadcrumb">
                 <ol class="breadcrumb mb-1">
                     <li class="breadcrumb-item"><a href="{{ route('transaction.index') }}">Bank Settings</a></li>
-                    <li class="breadcrumb-item"><a href="{{ route('transaction.log', $transaction->bank_setting_id) }}">Transaction Logs</a></li>
-                    <li class="breadcrumb-item active fw-bold">Edit Transaction</li>
+
+                    @if(request('from') === 'filter')
+                        <li class="breadcrumb-item"><a href="{{ route('transaction.filter', request()->except(['transaction', 'mode', 'from'])) }}">Filtered Transactions</a></li>
+                    @else
+                        <li class="breadcrumb-item"><a href="{{ route('transaction.log', $transaction->bank_setting_id) }}">Transaction Logs</a></li>
+                    @endif
+
+                    <li class="breadcrumb-item active fw-bold">
+                        @if(isset($isView) && $isView)
+                            View Transaction Detail
+                        @else
+                            Edit Transaction
+                        @endif
+                    </li>
                 </ol>
             </nav>
-            <h4 class="fw-bold mb-0">Edit Transaction</h4>
+            <h4 class="fw-bold mb-0">
+                @if(isset($isView) && $isView)
+                    View Transaction Detail
+                @else
+                    Edit Transaction
+                @endif
+            </h4>
         </div>
 
         <div class="col-md-5 text-md-end mt-3 mt-md-0 d-flex justify-content-md-end gap-2">
             <a href="{{ route('transaction.index') }}" class="btn btn-outline-secondary btn-sm">
                 <i class="bx bx-wallet me-1"></i> Bank Settings
             </a>
-            <a href="{{ route('transaction.log', $transaction->bank_setting_id) }}" class="btn btn-outline-primary btn-sm">
-                <i class="bx bx-arrow-back me-1"></i> Transaction Logs
-            </a>
+
+            @if(request('from') === 'filter')
+                <a href="{{ route('transaction.filter', request()->except(['transaction', 'mode', 'from'])) }}" class="btn btn-outline-primary btn-sm">
+                    <i class="bx bx-arrow-back me-1"></i> Filtered Transactions
+                </a>
+            @else
+                <a href="{{ route('transaction.log', $transaction->bank_setting_id) }}" class="btn btn-outline-primary btn-sm">
+                    <i class="bx bx-arrow-back me-1"></i> Transaction Logs
+                </a>
+            @endif
         </div>
     </div>
 
@@ -32,11 +57,15 @@
 
                 <div class="row g-3 mb-4">
                     <div class="col-12 alert alert-warning py-2 mb-2">
-                        <i class="bx bx-info-circle me-1"></i> Transaction Date, Flow Type, Direction, Bank Accounts, and Purpose are locked.
-                        @if($transaction->type === 'own')
-                            For Own Account transactions, Remark 1 is also locked. You can only update the <strong>Amount</strong> and <strong>Remark 2</strong>.
+                        @if(isset($isView) && $isView)
+                            <strong>View Mode:</strong> This transaction was created before today and cannot be edited.
                         @else
-                            You can update the <strong>Amount</strong>, <strong>Remark 1</strong>, and <strong>Remark 2</strong>.
+                            <i class="bx bx-info-circle me-1"></i> Transaction Date, Flow Type, Direction, Bank Accounts, and Purpose are locked.
+                            @if($transaction->type === 'own')
+                                For Own Account transactions, Remark 1 is also locked. You can only update the <strong>Amount</strong> and <strong>Remark 2</strong>.
+                            @else
+                                You can update the <strong>Amount</strong>, <strong>Remark 1</strong>, and <strong>Remark 2</strong>.
+                            @endif
                         @endif
                     </div>
 
@@ -113,7 +142,7 @@
                         <div class="row g-2">
                             <div class="col-md-3">
                                 <label class="form-label small">Amount <span class="text-danger">*</span></label>
-                                <input type="number" step="0.01" min="0.01" max="999999999999.99" class="form-control" name="amount" value="{{ old('amount', $transaction->amount) }}" required>
+                                <input type="number" step="0.01" min="0.01" max="999999999999.99" class="form-control" name="amount" value="{{ old('amount', $transaction->amount) }}" {{ isset($isView) && $isView ? 'readonly' : 'required' }}>
                             </div>
                             <div class="col-md-3">
                                 <label class="form-label small">Purpose <span class="text-danger">*</span></label>
@@ -126,7 +155,7 @@
                             </div>
                             <div class="col-md-3">
                                 <label class="form-label small">Remark 2</label>
-                                <input type="text" class="form-control" name="remark_2" value="{{ old('remark_2', $transaction->remark_2) }}" placeholder="Remark 2">
+                                <input type="text" class="form-control" name="remark_2" value="{{ old('remark_2', $transaction->remark_2) }}" placeholder="Remark 2" {{ isset($isView) && $isView ? 'readonly' : '' }}>
                             </div>
                         </div>
                     </div>
@@ -142,7 +171,7 @@
                         <div class="row g-2">
                             <div class="col-md-3">
                                 <label class="form-label small">Amount <span class="text-danger">*</span></label>
-                                <input type="number" step="0.01" min="0.01" max="999999999999.99" class="form-control" name="amount" value="{{ old('amount', $transaction->amount) }}" required>
+                                <input type="number" step="0.01" min="0.01" max="999999999999.99" class="form-control" name="amount" value="{{ old('amount', $transaction->amount) }}" {{ isset($isView) && $isView ? 'readonly' : 'required' }}>
                             </div>
                             <div class="col-md-3">
                                 <label class="form-label small">Purpose <span class="text-danger">*</span></label>
@@ -151,19 +180,27 @@
                             <div class="col-md-3">
                                 <label class="form-label small">Remark 1 (Details/Customer Name)</label>
                                 <!-- Remark 1 is fully editable for external transactions[cite: 19] -->
-                                <input type="text" class="form-control" name="remark_1" value="{{ old('remark_1', $transaction->remark_1) }}" placeholder="Remark 1">
+                                <input type="text" class="form-control" name="remark_1" value="{{ old('remark_1', $transaction->remark_1) }}" placeholder="Remark 1" {{ isset($isView) && $isView ? 'readonly' : '' }}>
                             </div>
                             <div class="col-md-3">
                                 <label class="form-label small">Remark 2</label>
-                                <input type="text" class="form-control" name="remark_2" value="{{ old('remark_2', $transaction->remark_2) }}" placeholder="Remark 2">
+                                <input type="text" class="form-control" name="remark_2" value="{{ old('remark_2', $transaction->remark_2) }}" placeholder="Remark 2" {{ isset($isView) && $isView ? 'readonly' : '' }}>
                             </div>
                         </div>
                     </div>
                 @endif
 
                 <div class="col-12 mt-4">
-                    <button type="submit" class="btn btn-primary">Update Transaction</button>
-                    <a href="{{ route('transaction.log', $transaction->bank_setting_id) }}" class="btn btn-secondary">Cancel</a>
+                    @if(!isset($isView) || !$isView)
+                        <button type="submit" class="btn btn-primary">Update Transaction</button>
+
+                        @if(request('from') === 'filter')
+                            <a href="{{ route('transaction.filter', request()->except(['transaction', 'mode', 'from'])) }}" class="btn btn-secondary">Cancel</a>
+                        @else
+                            <a href="{{ route('transaction.log', $transaction->bank_setting_id) }}" class="btn btn-secondary">Cancel</a>
+                        @endif
+
+                    @endif
                 </div>
             </form>
         </div>

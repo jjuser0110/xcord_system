@@ -11,4 +11,5 @@ Route::prefix('/transaction')->as('transaction.')->middleware(['auth'])->group(f
     Route::get('/edit/{transaction}', 'TransactionController@edit')->name('edit');
     Route::post('/update/{transaction}', 'TransactionController@update')->name('update');
     Route::get('/destroy/{transaction}', 'TransactionController@destroy')->name('destroy');
+    Route::get('/filter', 'TransactionController@filter')->name('filter');
 });
