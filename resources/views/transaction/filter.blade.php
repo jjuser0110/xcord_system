@@ -78,7 +78,8 @@
                                 <td class="small text-truncate" style="max-width: 150px;" title="{{ $tx->remark_2 }}">{{ $tx->remark_2 ?? '-' }}</td>
                                 <td class="small text-muted">{{ $tx->created_at->format('d/m/Y H:i') }}</td>
                                 <td class="text-center">
-                                    @if(\Carbon\Carbon::parse($tx->created_at)->isToday())
+                                    @php $isStaffViewer = optional(auth()->user()->role)->name === 'staff_viewer'; @endphp
+                                    @if(!$isStaffViewer && \Carbon\Carbon::parse($tx->created_at)->isToday())
                                         <!-- Edit Button if created today -->
                                         <a href="{{ route('transaction.edit', array_merge(['transaction' => $tx->id, 'from' => 'filter'], request()->query())) }}"
                                         class="btn btn-sm btn-icon btn-text-secondary rounded-pill waves-effect"

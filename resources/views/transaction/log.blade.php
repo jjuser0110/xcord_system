@@ -37,9 +37,11 @@
                         <input type="month" name="month" value="{{ $currentMonth }}" class="form-control form-control-sm" onchange="this.form.submit()">
                     </form>
 
-                    <a href="{{ route('transaction.create', ['bank_setting_id' => $bank_setting->id]) }}" class="btn btn-primary btn-sm">
-                        <i class="bx bx-plus me-1"></i> Add
-                    </a>
+                    @if(optional(auth()->user()->role)->name !== 'staff_viewer')
+                        <a href="{{ route('transaction.create', ['bank_setting_id' => $bank_setting->id]) }}" class="btn btn-primary btn-sm">
+                            <i class="bx bx-plus me-1"></i> Add
+                        </a>
+                    @endif
                 </div>
             </div>
         </div>
@@ -136,7 +138,8 @@
                                 <td class="small text-muted">{{ $tx->created_at->format('d/m/Y H:i') }}</td>
                                 <td class="small text-muted">{{ ucfirst($tx->creator->username ?? '-') }}</td>
                                 <td class="text-center">
-                                    @if(\Carbon\Carbon::parse($tx->created_at)->isToday())
+                                    @php $isStaffViewer = optional(auth()->user()->role)->name === 'staff_viewer'; @endphp
+                                    @if(!$isStaffViewer && \Carbon\Carbon::parse($tx->created_at)->isToday())
                                         <div class="d-inline-block text-nowrap">
                                             <!-- Edit Button -->
                                             <a href="{{ route('transaction.edit', $tx->id) }}"

@@ -15,6 +15,19 @@ class PurposeController extends Controller
 {
     use CountryScopeTrait;
 
+    public function __construct()
+    {
+        $this->middleware(function ($request, $next) {
+            if (auth()->check()) {
+                if (auth()->user()->role_id !== 1) {
+                    return redirect()->route('home')
+                        ->with('error', 'Unauthorized action. Only superadmin can access this page.');
+                }
+            }
+            return $next($request);
+        });
+    }
+
     public function index(Request $request)
     {
         $activeCountryId = session('active_country_id');

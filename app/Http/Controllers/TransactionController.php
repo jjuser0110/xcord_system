@@ -27,39 +27,71 @@ class TransactionController extends Controller
         // Apply the check to actions that modify data
         $this->middleware(\App\Http\Middleware\CheckSnapshotRunning::class)
             ->only(['store', 'update', 'destroy']);
+
+        $this->middleware(function ($request, $next) {
+            if (auth()->check()) {
+                $user = auth()->user();
+                $roleName = optional($user->role)->name;
+
+                $isSuperAdmin = ($user->role_id === 1 || $roleName === 'superadmin');
+                $isCompanyStaff = ($roleName === 'company_staff');
+
+                // If not Super Admin or Company Staff
+                if (!$isSuperAdmin && !$isCompanyStaff) {
+                    // Allow edit route ONLY if it's explicitly in view-only mode
+                    if ($request->routeIs('transaction.edit') && $request->query('mode') === 'view') {
+                        return $next($request);
+                    }
+
+                    return redirect()->route('transaction.index')
+                        ->with('error', 'Unauthorized action. Staff viewers have read-only access.');
+                }
+            }
+            return $next($request);
+        })->only(['create', 'store', 'edit', 'update', 'destroy']);
     }
 
     public function index(Request $request)
     {
         $currentMonth = $request->input('month', Carbon::now()->format('Y-m'));
+        $sortBy = $request->input('sort');
+        $direction = $request->input('direction', 'asc');
 
         $startDate = Carbon::parse($currentMonth)->startOfMonth()->format('d.m.Y');
         $endDate = Carbon::parse($currentMonth)->endOfMonth()->format('d.m.Y');
         $endOfMonthDate = Carbon::parse($currentMonth)->endOfMonth();
 
-        // 1. Fetch paginated bank settings based on country scope
-        $query = BankSetting::with(['bank', 'country'])->where('created_at', '<=', $endOfMonthDate)->orderBy('id', 'desc');
+        $query = BankSetting::with(['bank', 'country'])
+            ->leftJoin('bank_monthly_summaries', function($join) use ($currentMonth) {
+                $join->on('bank_settings.id', '=', 'bank_monthly_summaries.bank_setting_id')
+                     ->where('bank_monthly_summaries.closing_month', '=', $currentMonth);
+            })
+            ->select('bank_settings.*', 'bank_monthly_summaries.end_balance', 'bank_monthly_summaries.transaction_count')
+            ->where('bank_settings.created_at', '<=', $endOfMonthDate);
+
         $this->scopeByCountry($query);
+
+        if ($sortBy === 'bank_setting') {
+            $query->orderBy('bank_settings.owner_name', $direction);
+        } elseif ($sortBy === 'balance') {
+            $query->orderBy(DB::raw('COALESCE(bank_monthly_summaries.end_balance, 0)'), $direction);
+        } elseif ($sortBy === 'count') {
+            $query->orderBy(DB::raw('COALESCE(bank_monthly_summaries.transaction_count, 0)'), $direction);
+        } else {
+            $query->orderBy('bank_settings.id', 'desc');
+        }
+
         $bankSettings = $query->paginate(50);
+
+        foreach ($bankSettings as $setting) {
+            $setting->monthly_balance = $setting->end_balance ?? 0.00;
+            $setting->month_transaction_count = $setting->transaction_count ?? 0;
+        }
 
         // 2. Attach monthly stats efficiently (bulk fetch or from summary table)
         $bankSettingIds = $bankSettings->pluck('id');
 
         // Fetch summaries for these specific visible accounts for the chosen month
-        $summaries = DB::table('bank_monthly_summaries')
-            ->whereIn('bank_setting_id', $bankSettingIds)
-            ->where('closing_month', $currentMonth)
-            ->get()
-            ->keyBy('bank_setting_id');
-
-        foreach ($bankSettings as $setting) {
-            $summary = $summaries->get($setting->id);
-            $setting->monthly_balance = $summary ? $summary->end_balance : 0.00;
-            $setting->month_transaction_count = $summary ? $summary->transaction_count : 0;
-        }
-
-        // 3. Compute Table-Wide Totals for the current page or entire filtered scope
-        // (Using database aggregation query instead of PHP loops for speed)
         $totalsQuery = DB::table('bank_monthly_summaries')
             ->whereIn('bank_setting_id', $bankSettingIds)
             ->where('closing_month', $currentMonth);

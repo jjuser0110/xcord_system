@@ -46,11 +46,15 @@
                                 @endif
                             </td>
                             <td>
-                                <div class="d-inline-block text-nowrap">
-                                    <a href="{{ route('bank_phone_number.edit', [$row, 'page' => request('page')]) }}" class="btn btn-sm btn-icon item-edit me-4" onclick="showLoading()" title="Edit">
-                                        <i class="bx bx-edit-alt"></i>Edit
-                                    </a>
-                                </div>
+                                @if(optional(auth()->user()->role)->name !== 'staff_viewer')
+                                    <div class="d-inline-block text-nowrap">
+                                        <a href="{{ route('bank_phone_number.edit', [$row, 'page' => request('page')]) }}" class="btn btn-sm btn-icon item-edit me-4" onclick="showLoading()" title="Edit">
+                                            <i class="bx bx-edit-alt"></i>Edit
+                                        </a>
+                                    </div>
+                                @else
+                                    <span class="text-muted">-</span>
+                                @endif
                             </td>
                         </tr>
                         @empty

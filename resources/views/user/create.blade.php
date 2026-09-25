@@ -56,18 +56,18 @@
                     @if(!isset($user)) required @endif/>
                 </div>
 
-                {{-- <div class="col-md-6">
+                <div class="col-md-6">
                     <label class="form-label" for="role_id">Role</label>
                     <select name="role_id" id="role_id" class="form-select" required>
                         <option value="" disabled selected>Select Role</option>
-                        @foreach($roles as $id => $title)
-                            <option value="{{ $id }}"
-                                {{ (isset($user) && $user->role_id == $id) ? 'selected' : '' }}>
-                                {{ $title }}
+                        @foreach($roles as $role)
+                            <option value="{{ $role->id }}"
+                                {{ (isset($user) && $user->role_id == $role->id) ? 'selected' : '' }}>
+                                {{ $role->title }}
                             </option>
                         @endforeach
                     </select>
-                </div> --}}
+                </div>
 
                 {{-- <div class="col-md-6">
                     <label class="form-label" for="role_name">Role</label>

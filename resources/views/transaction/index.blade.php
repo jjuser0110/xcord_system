@@ -69,9 +69,36 @@
                         <tr>
                             <th>No.</th>
                             <th>Color</th>
-                            <th>Bank Setting</th>
-                            <th>Current Balance Amount</th>
-                            <th>Count (This Month)</th>
+                            <th>
+                                <a href="{{ route('transaction.index', array_merge(request()->all(), ['sort' => 'bank_setting', 'direction' => (request('sort') === 'bank_setting' && request('direction') === 'asc') ? 'desc' : 'asc'])) }}" class="text-dark text-decoration-none d-flex justify-content-between align-items-center">
+                                <span>Bank Setting</span>
+                                    @if(request('sort') === 'bank_setting')
+                                        <i class="bx bx-chevron-{{ request('direction') === 'asc' ? 'up' : 'down' }} fs-5"></i>
+                                    @else
+                                        <i class="bx bx-sort text-muted"></i>
+                                    @endif
+                                </a>
+                            </th>
+                            <th>
+                                <a href="{{ route('transaction.index', array_merge(request()->all(), ['sort' => 'balance', 'direction' => (request('sort') === 'balance' && request('direction') === 'asc') ? 'desc' : 'asc'])) }}" class="text-dark text-decoration-none d-flex justify-content-between align-items-center">
+                                    <span>Current Balance Amount</span>
+                                    @if(request('sort') === 'balance')
+                                        <i class="bx bx-chevron-{{ request('direction') === 'asc' ? 'up' : 'down' }} fs-5"></i>
+                                    @else
+                                        <i class="bx bx-sort text-muted"></i>
+                                    @endif
+                                </a>
+                            </th>
+                            <th>
+                                <a href="{{ route('transaction.index', array_merge(request()->all(), ['sort' => 'count', 'direction' => (request('sort') === 'count' && request('direction') === 'asc') ? 'desc' : 'asc'])) }}" class="text-dark text-decoration-none d-flex justify-content-between align-items-center">
+                                    <span>Count (This Month)</span>
+                                    @if(request('sort') === 'count')
+                                        <i class="bx bx-chevron-{{ request('direction') === 'asc' ? 'up' : 'down' }} fs-5"></i>
+                                    @else
+                                        <i class="bx bx-sort text-muted"></i>
+                                    @endif
+                                </a>
+                            </th>
                             <th>Action</th>
                         </tr>
                     </thead>
@@ -137,7 +164,7 @@
             @if(method_exists($bankSettings, 'links'))
                 <div class="card-footer d-flex justify-content-end align-items-center">
                     <div>
-                        {{ $bankSettings->appends(['month' => $currentMonth])->links('pagination::bootstrap-5') }}
+                        {{ $bankSettings->appends(request()->query())->links('pagination::bootstrap-5') }}
                     </div>
                 </div>
             @endif

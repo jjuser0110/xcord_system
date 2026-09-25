@@ -26,6 +26,16 @@ class BankSettingController extends Controller
         // Apply the check to actions that modify data or amounts
         $this->middleware(\App\Http\Middleware\CheckSnapshotRunning::class)
             ->only(['store', 'update', 'updateAmount', 'destroy']);
+
+        $this->middleware(function ($request, $next) {
+            if (auth()->check()) {
+                if (auth()->user()->role_id !== 1) {
+                    return redirect()->route('home')
+                        ->with('error', 'Unauthorized action. Only superadmin can access this page.');
+                }
+            }
+            return $next($request);
+        });
     }
 
     public function index(Request $request)

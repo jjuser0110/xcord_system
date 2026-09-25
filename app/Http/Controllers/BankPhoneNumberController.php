@@ -11,6 +11,25 @@ class BankPhoneNumberController extends Controller
 {
     use CountryScopeTrait;
 
+    public function __construct()
+    {
+        $this->middleware(function ($request, $next) {
+            if (auth()->check()) {
+                $user = auth()->user();
+                $roleName = optional($user->role)->name;
+
+                $isSuperAdmin = ($user->role_id === 1 || $roleName === 'superadmin');
+                $isCompanyStaff = ($roleName === 'company_staff');
+
+                if (!$isSuperAdmin && !$isCompanyStaff) {
+                    return redirect()->route('bank_phone_number.index')
+                        ->with('error', 'Unauthorized action. Staff viewers have read-only access.');
+                }
+            }
+            return $next($request);
+        })->only(['edit', 'update']);
+    }
+
     public function index(Request $request)
     {
         $query = BankPhoneNumber::with(['bankSetting.bank', 'bankSetting.country']);
