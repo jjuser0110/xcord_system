@@ -681,4 +681,55 @@ class TransactionController extends Controller
             'amount'
         ));
     }
+
+    public function exportLog(Request $request, BankSetting $bank_setting)
+    {
+        $currentMonth = $request->input('month', Carbon::now()->format('Y-m'));
+
+        $transactions = Transaction::with(['purpose', 'creator'])
+            ->where('bank_setting_id', $bank_setting->id)
+            ->where('closing_month', $currentMonth)
+            ->orderBy('id', 'desc')
+            ->get();
+
+        $fileName = 'transaction_logs_' . $bank_setting->id . '_' . $currentMonth . '.csv';
+
+        $headers = [
+            "Content-type"        => "text/csv",
+            "Content-Disposition" => "attachment; filename=$fileName",
+            "Pragma"              => "no-cache",
+            "Cache-Control"       => "must-revalidate, post-check=0, pre-check=0",
+            "Expires"             => "0"
+        ];
+
+        $callback = function() use ($transactions, $bank_setting) {
+            $file = fopen('php://output', 'w');
+
+            // CSV Header matching the log table columns
+            fputcsv($file, ['Date', 'In', 'Out', 'Balance', 'Type', 'Purpose', 'Remark 1', 'Remark 2', 'Created At', 'Created By']);
+
+            foreach ($transactions as $tx) {
+                $in = $tx->transfer_direction == '+' ? $tx->amount : '';
+                $out = $tx->transfer_direction == '-' ? $tx->amount : '';
+                $balance = ($tx->type === 'own' && $tx->target_bank_setting_id == $bank_setting->id) ? $tx->target_end_balance : $tx->end_balance;
+
+                fputcsv($file, [
+                    $tx->transaction_date,
+                    $in,
+                    $out,
+                    $balance,
+                    strtoupper($tx->type),
+                    optional($tx->purpose)->title ?? '',
+                    $tx->remark_1 ?? '',
+                    $tx->remark_2 ?? '',
+                    optional($tx->created_at)->format('d/m/Y H:i') ?? '',
+                    optional($tx->creator)->username ?? ''
+                ]);
+            }
+
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
+    }
 }

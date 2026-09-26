@@ -33,6 +33,10 @@
                         <i class="bx bx-arrow-back me-1"></i> Back
                     </a>
 
+                    <a href="{{ route('transaction.export-log', ['bank_setting' => $bank_setting->id, 'month' => $currentMonth]) }}" class="btn btn-outline-success btn-sm">
+                        <i class="bx bx-export me-1"></i> Export
+                    </a>
+
                     <form method="GET" action="{{ route('transaction.log', $bank_setting->id) }}" class="d-inline-flex align-items-center">
                         <input type="month" name="month" value="{{ $currentMonth }}" class="form-control form-control-sm" onchange="this.form.submit()">
                     </form>
