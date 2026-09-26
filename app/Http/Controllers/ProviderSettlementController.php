@@ -36,6 +36,22 @@ class ProviderSettlementController extends Controller
             $query->where('type', $currentType);
         }
 
+        $providerQuery = Purpose::query()
+            ->whereNotNull('provider_name')
+            ->where('provider_name', '!=', '');
+
+        if ($currentType === 'in') {
+            $providerQuery->where('show_on_received_from_provider', 1);
+        } elseif ($currentType === 'out') {
+            $providerQuery->where('show_on_topup_to_provider', 1);
+        }
+
+        $providers = $providerQuery->pluck('provider_name')->unique()->filter();
+
+        if ($currentProvider && !$providers->contains($currentProvider)) {
+            $currentProvider = null;
+        }
+
         if ($currentProvider) {
             $query->where('provider_name', $currentProvider);
         }
@@ -45,19 +61,6 @@ class ProviderSettlementController extends Controller
         $totalSum = (clone $query)->sum('settlement_amount');
 
         $settlements = $query->paginate(50);
-
-        $providerQuery = Purpose::query()
-            ->whereNotNull('provider_name')
-            ->where('provider_name', '!=', '');
-
-        // 1. Filter by Type (In / Out)
-        if ($currentType === 'in') {
-            $providerQuery->where('show_on_received_from_provider', 1);
-        } elseif ($currentType === 'out') {
-            $providerQuery->where('show_on_topup_to_provider', 1);
-        }
-
-        $providers = $providerQuery->pluck('provider_name')->unique()->filter();
 
         return view('provider_settlement.index', compact('settlements', 'currentDate', 'currentType', 'currentProvider', 'providers', 'totalSum'));
     }
