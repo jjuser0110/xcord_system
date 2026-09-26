@@ -33,10 +33,6 @@
                         <i class="bx bx-arrow-back me-1"></i> Back
                     </a>
 
-                    <a href="{{ route('transaction.export-log', ['bank_setting' => $bank_setting->id, 'month' => $currentMonth]) }}" class="btn btn-outline-success btn-sm">
-                        <i class="bx bx-export me-1"></i> Export
-                    </a>
-
                     <form method="GET" action="{{ route('transaction.log', $bank_setting->id) }}" class="d-inline-flex align-items-center">
                         <input type="month" name="month" value="{{ $currentMonth }}" class="form-control form-control-sm" onchange="this.form.submit()">
                     </form>
@@ -69,6 +65,11 @@
     <!-- Main Transaction Table Card -->
     <div class="card">
         <div class="card-body px-3 py-3">
+            <div class="d-flex justify-content-end mb-3">
+                <a href="{{ route('transaction.export-log', ['bank_setting' => $bank_setting->id, 'month' => $currentMonth]) }}" class="btn btn-outline-success btn-sm">
+                    <i class="bx bx-export me-1"></i> Export to CSV
+                </a>
+            </div>
             <div class="table-responsive text-nowrap">
                 <table class="table table-bordered table-sm align-middle" style="font-size: 0.85rem;">
                     <thead class="table-light">
