@@ -29,6 +29,18 @@
                     </select>
                 </div>
 
+                <div class="d-flex align-items-center gap-1">
+                    <label class="form-label mb-0 fw-semibold small text-nowrap">Provider:</label>
+                    <select name="provider_name" class="form-select form-select-sm" onchange="this.form.submit()">
+                        <option value="">All Providers</option>
+                        @foreach($providers as $prov)
+                            <option value="{{ $prov }}" {{ (isset($currentProvider) && $currentProvider === $prov) ? 'selected' : '' }}>
+                                {{ $prov }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+
                 <!-- Date Filter -->
                 <div class="d-flex align-items-center gap-1">
                     <label class="form-label mb-0 fw-semibold small text-nowrap">Date:</label>
