@@ -81,7 +81,7 @@ class TransactionController extends Controller
             $query->orderBy('bank_settings.id', 'desc');
         }
 
-        $bankSettings = $query->paginate(50);
+        $bankSettings = $query->paginate(100);
 
         foreach ($bankSettings as $setting) {
             $setting->monthly_balance = $setting->end_balance ?? 0.00;
