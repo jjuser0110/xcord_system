@@ -10,20 +10,20 @@
     <div class="card mb-4">
         <div class="card-body d-flex flex-column flex-md-row justify-content-between align-items-center gap-3">
             <!-- Summary Totals Section -->
-            <div class="d-flex flex-wrap align-items-center gap-4">
-                <div>
+            <div class="d-flex flex-wrap align-items-center gap-3 gap-md-4">
+                <div class="pe-3 border-end">
                     <span class="text-muted small d-block mb-1">Total In ({{ $currentDate ?: 'All Time' }})</span>
-                    <h4 class="fw-bold mb-0 text-success">+ {{ number_format($totalIn, 2) }}</h4>
+                    <h5 class="fw-bold mb-0 text-success">+ {{ number_format($totalIn, 2) }}</h5>
                 </div>
-                <div class="border-start ps-3">
+                <div class="pe-3 border-end">
                     <span class="text-muted small d-block mb-1">Total Out ({{ $currentDate ?: 'All Time' }})</span>
-                    <h4 class="fw-bold mb-0 text-danger">- {{ number_format($totalOut, 2) }}</h4>
+                    <h5 class="fw-bold mb-0 text-danger">- {{ number_format($totalOut, 2) }}</h5>
                 </div>
-                <div class="border-start ps-3">
+                <div>
                     <span class="text-muted small d-block mb-1">Net Total</span>
-                    <h4 class="fw-bold mb-0 {{ $netTotal >= 0 ? 'text-primary' : 'text-danger' }}">
+                    <h5 class="fw-bold mb-0 {{ $netTotal >= 0 ? 'text-primary' : 'text-danger' }}">
                         {{ $netTotal >= 0 ? '+ ' : '- ' }}{{ number_format(abs($netTotal), 2) }}
-                    </h4>
+                    </h5>
                 </div>
             </div>
 
