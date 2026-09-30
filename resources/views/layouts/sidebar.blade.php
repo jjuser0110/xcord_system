@@ -9,6 +9,7 @@ $isBankPhoneNumber = Str::is('bank_phone_number.*', $currentRoute);
 $isTransaction = Str::is('transaction.*', $currentRoute);
 $isProviderSettlement = Str::is('provider_settlement.*', $currentRoute);
 $isBankSnapshot = Str::is('bank_snapshot.*', $currentRoute);
+$isPurposeReport = Str::is('purpose_report.*', $currentRoute);
 
 
 @endphp
@@ -104,6 +105,14 @@ $isBankSnapshot = Str::is('bank_snapshot.*', $currentRoute);
             <a href="{{ route('provider_settlement.index') }}" class="menu-link">
                 <i class="menu-icon tf-icons bx bx-receipt"></i>
                 <div data-i18n="Provider In/Out">Provider In/Out</div>
+            </a>
+        </li>
+
+        <!-- Purpose Report -->
+        <li class="menu-item {{ $isPurposeReport ? 'active' : '' }}">
+            <a href="{{ route('purpose_report.index') }}" class="menu-link">
+                <i class="menu-icon tf-icons bx bx-receipt"></i>
+                <div data-i18n="Report">Report</div>
             </a>
         </li>
 

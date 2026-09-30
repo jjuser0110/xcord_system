@@ -43,7 +43,7 @@
                 <script>
                     window.bankOptionsData = [
                         @foreach($bankSettings as $b)
-                            { id: "{{ $b->id }}", name: "{{ $b->owner_name }} - {{ optional($b->bank)->short_name ?? '' }}", balance: "{{ $b->amount }}" },
+                            { id: "{{ $b->id }}", name: "{{ $b->owner_name }} - {{ optional($b->bank)->short_name ?? '' }}", balance: "{{ $b->amount }}", color: "{{ $b->color ?? '#000000' }}" },
                         @endforeach
                     ];
                 </script>
@@ -247,15 +247,39 @@
         return found ? parseFloat(found.balance) || 0 : 0;
     }
 
+    const bankPaletteMap = {
+        'white':      { hex: '#ffffff', text: '#000000' },
+        'red':        { hex: '#ff3e1d', text: '#ffffff' },
+        'pink':       { hex: '#ffdbeb', text: '#000000' },
+        'blue':       { hex: '#2a5d96', text: '#ffffff' },
+        'lightblue':  { hex: '#7ad3ff', text: '#000000' },
+        'green':      { hex: '#6aae46', text: '#ffffff' },
+        'lightgreen': { hex: '#b1f08a', text: '#000000' }
+    };
+
     function getBankOptionsHtml(selectedId = '', excludeId = '') {
         let html = '<option value="" disabled selected>Select Bank Account</option>';
+
         window.bankOptionsData.forEach(b => {
             if (excludeId && b.id == excludeId) {
                 return;
             }
             let sel = (b.id == selectedId) ? 'selected' : '';
-            html += `<option value="${b.id}" ${sel}>${b.name} (Balance: ${parseFloat(b.balance).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })})</option>`;
+
+            // Normalize the color key, default to 'white' if empty or unknown
+            let colorKey = (b.color || 'white').toLowerCase().trim();
+            let palette = bankPaletteMap[colorKey] || bankPaletteMap['white'];
+
+            let bgColor = palette.hex;
+            let textColor = palette.text; // Automatically black for pink/white, white for red/blue/green
+
+            let style = `background-color: ${bgColor}; color: ${textColor}; font-weight: 500;`;
+
+            html += `<option value="${b.id}" ${sel} style="${style}">
+                ${b.name} (Balance: ${parseFloat(b.balance).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })})
+            </option>`;
         });
+
         return html;
     }
 

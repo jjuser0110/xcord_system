@@ -20,6 +20,13 @@
 
             <!-- Filter Form with Type Dropdown & Date -->
             <form method="GET" action="{{ route('provider_settlement.index') }}" class="d-flex align-items-center gap-2 flex-wrap">
+                @if(request('sort'))
+                    <input type="hidden" name="sort" value="{{ request('sort') }}">
+                @endif
+                @if(request('direction'))
+                    <input type="hidden" name="direction" value="{{ request('direction') }}">
+                @endif
+
                 <!-- Type In/Out Dropdown Filter -->
                 <div class="d-flex align-items-center gap-1">
                     <label class="form-label mb-0 fw-semibold small text-nowrap">Type:</label>
@@ -47,7 +54,7 @@
                     <input type="date" name="date" value="{{ $currentDate }}" class="form-control form-control-sm" onchange="this.form.submit()">
                 </div>
 
-                @if($currentDate || $currentType)
+                @if($currentDate || $currentType || request('sort'))
                     <a href="{{ route('provider_settlement.index') }}" class="btn btn-outline-secondary btn-sm text-nowrap">Reset</a>
                 @endif
             </form>
@@ -65,10 +72,43 @@
                     <thead class="table-light">
                         <tr>
                             <th class="py-2">ID</th>
-                            <th class="py-2">Bank Setting</th>
+                            <th class="py-2">
+                                <a href="{{ route('provider_settlement.index', array_merge(request()->all(), ['sort' => 'bank_setting', 'direction' => ($sortBy === 'bank_setting' && $direction === 'asc') ? 'desc' : 'asc'])) }}" class="text-dark text-decoration-none d-flex justify-content-between align-items-center">
+                                    Bank Setting
+                                    <span>
+                                        @if($sortBy === 'bank_setting')
+                                            <i class="bx bx-chevron-{{ $direction === 'asc' ? 'up' : 'down' }} text-primary"></i>
+                                        @else
+                                            <i class="bx bx-sort text-muted small"></i>
+                                        @endif
+                                    </span>
+                                </a>
+                            </th>
                             <th class="py-2">Type</th>
-                            <th class="py-2">Settlement</th>
-                            <th class="py-2">Provider</th>
+                            <th class="py-2">
+                                <a href="{{ route('provider_settlement.index', array_merge(request()->all(), ['sort' => 'settlement', 'direction' => ($sortBy === 'settlement' && $direction === 'asc') ? 'desc' : 'asc'])) }}" class="text-dark text-decoration-none d-flex justify-content-between align-items-center">
+                                    Settlement
+                                    <span>
+                                        @if($sortBy === 'settlement')
+                                            <i class="bx bx-chevron-{{ $direction === 'asc' ? 'up' : 'down' }} text-primary"></i>
+                                        @else
+                                            <i class="bx bx-sort text-muted small"></i>
+                                        @endif
+                                    </span>
+                                </a>
+                            </th>
+                            <th class="py-2">
+                                <a href="{{ route('provider_settlement.index', array_merge(request()->all(), ['sort' => 'provider', 'direction' => ($sortBy === 'provider' && $direction === 'asc') ? 'desc' : 'asc'])) }}" class="text-dark text-decoration-none d-flex justify-content-between align-items-center">
+                                    Provider
+                                    <span>
+                                        @if($sortBy === 'provider')
+                                            <i class="bx bx-chevron-{{ $direction === 'asc' ? 'up' : 'down' }} text-primary"></i>
+                                        @else
+                                            <i class="bx bx-sort text-muted small"></i>
+                                        @endif
+                                    </span>
+                                </a>
+                            </th>
                             <th class="py-2">Created At</th>
                             <th class="py-2">Created By</th>
                             <th class="py-2 text-center">Actions</th>

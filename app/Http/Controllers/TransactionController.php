@@ -118,7 +118,7 @@ class TransactionController extends Controller
             ->where('closing_month', $currentMonth)
             ->orderBy('id', 'desc');
 
-        $transactions = $query->paginate(50);
+        $transactions = $query->paginate(100);
 
         // Calculate total In and Total Out for the month
         $summaryQuery = Transaction::where('bank_setting_id', $bank_setting->id)
