@@ -62,19 +62,22 @@ class TransactionController extends Controller
         $endOfMonthDate = Carbon::parse($currentMonth)->endOfMonth();
 
         $query = BankSetting::with(['bank', 'country'])
-            ->leftJoin('bank_monthly_summaries', function($join) use ($currentMonth) {
-                $join->on('bank_settings.id', '=', 'bank_monthly_summaries.bank_setting_id')
-                     ->where('bank_monthly_summaries.closing_month', '=', $currentMonth);
-            })
-            ->select('bank_settings.*', 'bank_monthly_summaries.end_balance', 'bank_monthly_summaries.transaction_count')
-            ->where('bank_settings.created_at', '<=', $endOfMonthDate);
+        ->leftJoin('bank_monthly_summaries', function($join) use ($currentMonth) {
+            $join->on('bank_settings.id', '=', 'bank_monthly_summaries.bank_setting_id')
+                 ->where('bank_monthly_summaries.closing_month', '=', $currentMonth);
+        })
+        ->select(
+            'bank_settings.*',
+            'bank_monthly_summaries.transaction_count'
+        )
+        ->where('bank_settings.created_at', '<=', $endOfMonthDate);
 
         $this->scopeByCountry($query);
 
         if ($sortBy === 'bank_setting') {
             $query->orderBy('bank_settings.owner_name', $direction);
         } elseif ($sortBy === 'balance') {
-            $query->orderBy(DB::raw('COALESCE(bank_monthly_summaries.end_balance, 0)'), $direction);
+            $query->orderBy('bank_settings.amount', $direction);
         } elseif ($sortBy === 'count') {
             $query->orderBy(DB::raw('COALESCE(bank_monthly_summaries.transaction_count, 0)'), $direction);
         } else {
@@ -84,7 +87,7 @@ class TransactionController extends Controller
         $bankSettings = $query->paginate(100);
 
         foreach ($bankSettings as $setting) {
-            $setting->monthly_balance = $setting->end_balance ?? 0.00;
+            $setting->monthly_balance = $setting->amount ?? 0.00;
             $setting->month_transaction_count = $setting->transaction_count ?? 0;
         }
 
@@ -97,7 +100,9 @@ class TransactionController extends Controller
             ->where('closing_month', $currentMonth);
 
         $totalTableCount = $totalsQuery->sum('transaction_count');
-        $totalTableBalance = $totalsQuery->sum('end_balance');
+        $totalTableBalance = BankSetting::query()
+        ->whereIn('id', $bankSettingIds)
+        ->sum('amount');
 
         return view('transaction.index', compact(
             'bankSettings',
