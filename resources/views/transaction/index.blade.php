@@ -29,7 +29,7 @@
         </div>
         <div class="col-md-6">
             <div class="card bg-label-dark p-3">
-                <span>Total Balance Amount ({{ $currentMonth }}):</span>
+                <span>Total Balance Amount:</span>
                 <h4 class="fw-bold mb-0">{{ number_format($totalTableBalance ?? 0, 2) }}</h4>
             </div>
         </div>
