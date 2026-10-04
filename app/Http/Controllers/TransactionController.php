@@ -62,15 +62,15 @@ class TransactionController extends Controller
         $endOfMonthDate = Carbon::parse($currentMonth)->endOfMonth();
 
         $query = BankSetting::with(['bank', 'country'])
-        ->leftJoin('bank_monthly_summaries', function($join) use ($currentMonth) {
-            $join->on('bank_settings.id', '=', 'bank_monthly_summaries.bank_setting_id')
-                 ->where('bank_monthly_summaries.closing_month', '=', $currentMonth);
-        })
-        ->select(
-            'bank_settings.*',
-            'bank_monthly_summaries.transaction_count'
-        )
-        ->where('bank_settings.created_at', '<=', $endOfMonthDate);
+            ->leftJoin('bank_monthly_summaries', function($join) use ($currentMonth) {
+                $join->on('bank_settings.id', '=', 'bank_monthly_summaries.bank_setting_id')
+                    ->where('bank_monthly_summaries.closing_month', '=', $currentMonth);
+            })
+            ->select(
+                'bank_settings.*',
+                'bank_monthly_summaries.transaction_count'
+            )
+            ->where('bank_settings.created_at', '<=', $endOfMonthDate);
 
         $this->scopeByCountry($query);
 
@@ -101,8 +101,8 @@ class TransactionController extends Controller
 
         $totalTableCount = $totalsQuery->sum('transaction_count');
         $totalTableBalance = BankSetting::query()
-        ->whereIn('id', $bankSettingIds)
-        ->sum('amount');
+                            ->whereIn('id', $bankSettingIds)
+                            ->sum('amount');
 
         return view('transaction.index', compact(
             'bankSettings',
@@ -736,5 +736,34 @@ class TransactionController extends Controller
         };
 
         return response()->stream($callback, 200, $headers);
+    }
+    //
+    /**
+     * Custom country scoping specifically for TransactionController > filter.
+     */
+    public function filterScopeByCountry($query, $column = 'country_id')
+    {
+        $user = auth()->user();
+        if (!$user) {
+            return $query;
+        }
+
+        $roleName = optional($user->role)->name;
+        $isSuperAdmin = ($user->role_id === 1 || $roleName === 'superadmin');
+        $activeCountryId = session('active_country_id');
+
+        if ($isSuperAdmin) {
+            if ($activeCountryId && $activeCountryId !== 'no') {
+                $query->where($column, $activeCountryId);
+            }
+        } else {
+            if ($activeCountryId && $activeCountryId !== 'no') {
+                $query->where($column, $activeCountryId);
+            } elseif ($user->country_id) {
+                $query->where($column, $user->country_id);
+            }
+        }
+
+        return $query;
     }
 }

@@ -30,7 +30,7 @@ class UserController extends Controller
 
     public function index()
     {
-        $query = User::with('country')->whereHas('role', function ($q) {
+        $query = User::with('country')->where('id', '!=', 2)->whereHas('role', function ($q) {
                     $q->whereIn('name', ['company_staff', 'staff_viewer']);
                 });
         $this->scopeByCountry($query);
