@@ -7,6 +7,7 @@ use App\Models\Transaction;
 use App\Traits\CountryScopeTrait;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class PurposeReportController extends Controller
 {
@@ -28,7 +29,28 @@ class PurposeReportController extends Controller
             $query->whereDate('created_at', $currentDate);
         }
 
-        $purposes = Purpose::where('is_active', 1)->orderBy('title', 'asc')->get();
+        $activeCountryId = session('active_country_id');
+        $userCountryId = Auth::user()->country_id ?? null;
+
+        $purposesQuery = Purpose::query();
+
+        if ($activeCountryId !== 'no') {
+            $purposesQuery->where(function ($q) use ($activeCountryId, $userCountryId) {
+                $q->where('is_global', 1);
+
+                if ($activeCountryId && $activeCountryId !== 'no') {
+                    $q->orWhereHas('countries', function ($sub) use ($activeCountryId) {
+                        $sub->where('countries.id', $activeCountryId);
+                    });
+                } elseif ($userCountryId) {
+                    $q->orWhereHas('countries', function ($sub) use ($userCountryId) {
+                        $sub->where('countries.id', $userCountryId);
+                    });
+                }
+            });
+        }
+
+        $purposes = $purposesQuery->where('is_active', 1)->orderBy('title', 'asc')->get();
 
         if ($currentPurposeId) {
             $query->where('purpose_id', $currentPurposeId);

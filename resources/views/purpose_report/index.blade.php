@@ -36,7 +36,7 @@
                         <option value="">All Purposes</option>
                         @foreach($purposes as $purpose)
                             <option value="{{ $purpose->id }}" {{ (isset($currentPurposeId) && $currentPurposeId == $purpose->id) ? 'selected' : '' }}>
-                                {{ $purpose->title }}
+                                {{ $purpose->title }}{{ !empty($purpose->provider_name) ? ' (' . $purpose->provider_name . ')' : '' }}
                             </option>
                         @endforeach
                     </select>
