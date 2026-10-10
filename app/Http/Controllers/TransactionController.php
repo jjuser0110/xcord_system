@@ -253,6 +253,10 @@ class TransactionController extends Controller
                         $sourceBank = BankSetting::where('id', $sourceBankId)->lockForUpdate()->firstOrFail();
                         $targetBank = BankSetting::where('id', $targetBankId)->lockForUpdate()->firstOrFail();
 
+                        if ($sourceBank->amount < $amount) {
+                            throw new \Exception('Insufficient balance in the source bank account (' . $sourceBank->owner_name . '). Available: ' . number_format($sourceBank->amount, 2));
+                        }
+
                         $sourceStart = $sourceBank->amount;
                         $sourceEnd = $sourceStart - $amount;
                         $sourceBank->update(['amount' => $sourceEnd]);
@@ -339,6 +343,9 @@ class TransactionController extends Controller
                     if ($direction === '+') {
                         $endBalance = $startBalance + $amount;
                     } else {
+                        if ($startBalance < $amount) {
+                            throw new \Exception('Insufficient balance in bank account (' . $primaryBank->owner_name . ') for this outflow. Available: ' . number_format($startBalance, 2));
+                        }
                         $endBalance = $startBalance - $amount;
                     }
 
@@ -506,6 +513,9 @@ class TransactionController extends Controller
                 if ($tx->transfer_direction === '+') {
                     $bank->amount += $diff;
                 } else {
+                    if ($bank->amount < $diff) {
+                        throw new \Exception('Insufficient balance update for bank account (' . $bank->owner_name . ').');
+                    }
                     $bank->amount -= $diff;
                 }
                 $bank->save();
