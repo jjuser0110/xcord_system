@@ -15,60 +15,108 @@ class PurposeReportController extends Controller
 
     public function index(Request $request)
     {
-        $currentDate = $request->input('date', Carbon::now()->format('Y-m-d'));
+        // Default to today's date to preserve the existing report behaviour.
+        $today = Carbon::today()->toDateString();
+
+        $startDate = $request->input('start_date') ?: $today;
+        $endDate = $request->input('end_date') ?: $today;
+
+        // Validate the date range.
+        $request->validate([
+            'start_date' => ['nullable', 'date'],
+            'end_date' => ['nullable', 'date'],
+            'purpose_id' => ['nullable', 'integer', 'exists:purposes,id'],
+        ]);
+
+        $startDate = Carbon::parse($startDate)->toDateString();
+        $endDate = Carbon::parse($endDate)->toDateString();
+
+        // Correct the range if the dates are entered in reverse order.
+        if ($startDate > $endDate) {
+            [$startDate, $endDate] = [$endDate, $startDate];
+        }
+
         $currentPurposeId = $request->input('purpose_id');
 
+        // Transaction report query.
         $query = Transaction::with([
             'bankSetting.bank',
             'purpose',
             'country',
-            'creator'
-        ])->orderBy('id', 'desc');
+            'creator',
+        ]);
 
-        if ($currentDate) {
-            $query->whereDate('created_at', $currentDate);
+        // Filter using the transaction date shown in the report.
+        $query->whereDate('transaction_date', '>=', $startDate)
+              ->whereDate('transaction_date', '<=', $endDate);
+
+        // Filter by purpose.
+        if ($currentPurposeId) {
+            $query->where('purpose_id', $currentPurposeId);
         }
 
+        // Preserve the existing country scope.
+        $this->scopeByCountry($query);
+
+        // Latest transactions first.
+        $query->orderBy('id', 'desc');
+
+        // Calculate totals using the same filters as the transaction table.
+        $totalIn = (clone $query)
+            ->where('transfer_direction', '+')
+            ->sum('amount');
+
+        $totalOut = (clone $query)
+            ->where('transfer_direction', '-')
+            ->sum('amount');
+
+        $netTotal = $totalIn - $totalOut;
+
+        // Paginate without losing the selected filters.
+        $transactions = $query->paginate(50);
+
+        // Purpose dropdown, preserving existing country-specific logic.
         $activeCountryId = session('active_country_id');
         $userCountryId = Auth::user()->country_id ?? null;
 
         $purposesQuery = Purpose::query();
 
         if ($activeCountryId !== 'no') {
-            $purposesQuery->where(function ($q) use ($activeCountryId, $userCountryId) {
+            $purposesQuery->where(function ($q) use (
+                $activeCountryId,
+                $userCountryId
+            ) {
                 $q->where('is_global', 1);
 
                 if ($activeCountryId && $activeCountryId !== 'no') {
-                    $q->orWhereHas('countries', function ($sub) use ($activeCountryId) {
+                    $q->orWhereHas('countries', function ($sub) use (
+                        $activeCountryId
+                    ) {
                         $sub->where('countries.id', $activeCountryId);
                     });
                 } elseif ($userCountryId) {
-                    $q->orWhereHas('countries', function ($sub) use ($userCountryId) {
+                    $q->orWhereHas('countries', function ($sub) use (
+                        $userCountryId
+                    ) {
                         $sub->where('countries.id', $userCountryId);
                     });
                 }
             });
         }
 
-        $purposes = $purposesQuery->where('is_active', 1)->orderBy('title', 'asc')->get();
+        $purposes = $purposesQuery
+            ->where('is_active', 1)
+            ->orderBy('title', 'asc')
+            ->get();
 
-        if ($currentPurposeId) {
-            $query->where('purpose_id', $currentPurposeId);
-        }
-
-        $this->scopeByCountry($query);
-
-        // Calculate totals based on transfer direction
-        $summaryQuery = clone $query;
-        $totalIn = (clone $summaryQuery)->where('transfer_direction', '+')->sum('amount');
-        $totalOut = (clone $summaryQuery)->where('transfer_direction', '-')->sum('amount');
-        $netTotal = $totalIn - $totalOut;
-
-        $transactions = $query->paginate(50);
+        // Keep currentDate for compatibility with the existing Blade view.
+        $currentDate = $startDate === $endDate ? $startDate : null;
 
         return view('purpose_report.index', compact(
             'transactions',
             'currentDate',
+            'startDate',
+            'endDate',
             'currentPurposeId',
             'purposes',
             'totalIn',
