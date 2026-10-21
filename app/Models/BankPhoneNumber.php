@@ -18,7 +18,7 @@ class BankPhoneNumber extends Model
         'TUNETALK' => 'Tune Talk',
         'XOX'      => 'XOX',
         'REDONE'   => 'redONE',
-        'EASTEL'   => 'eastel'
+        'EASTEL'   => 'EASTEL'
     ];
 
     public function bankSetting()
