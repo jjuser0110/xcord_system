@@ -88,7 +88,6 @@
                         id="start_date"
                         name="start_date"
                         value="{{ $startDate }}"
-                        max="{{ $endDate }}"
                         class="form-control form-control-sm"
                         style="font-size: 12px;">
                 </div>
@@ -105,7 +104,6 @@
                         id="end_date"
                         name="end_date"
                         value="{{ $endDate }}"
-                        min="{{ $startDate }}"
                         class="form-control form-control-sm"
                         style="font-size: 12px;">
                 </div>

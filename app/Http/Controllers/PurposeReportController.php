@@ -18,16 +18,15 @@ class PurposeReportController extends Controller
         // Default to today's date to preserve the existing report behaviour.
         $today = Carbon::today()->toDateString();
 
-        $startDate = $request->input('start_date') ?: $today;
-        $endDate = $request->input('end_date') ?: $today;
-
-        // Validate the date range.
         $request->validate([
             'start_date' => ['nullable', 'date'],
-            'end_date' => ['nullable', 'date'],
+            'end_date' => ['nullable', 'date', 'after_or_equal:start_date'],
             'purpose_id' => ['nullable', 'integer', 'exists:purposes,id'],
         ]);
-
+        
+        $startDate = $request->input('start_date', $today) ?: $today;
+        $endDate = $request->input('end_date', $today) ?: $today;
+        
         $startDate = Carbon::parse($startDate)->toDateString();
         $endDate = Carbon::parse($endDate)->toDateString();
 
