@@ -139,7 +139,7 @@ class TransactionController extends Controller
     {
         $query = BankSetting::with('bank');
         $this->scopeByCountry($query);
-        $bankSettings = $query->get();
+        $bankSettings = $query->ordered()->get();
 
         // Purpose filtering: is_global = 1 OR linked to session/active country context
         $activeCountryId = session('active_country_id');

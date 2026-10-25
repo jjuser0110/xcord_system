@@ -42,7 +42,7 @@ class BankSettingController extends Controller
     {
         $query = BankSetting::with(['bank', 'country', 'phoneNumbers']);
         $this->scopeByCountry($query);
-        $bank_settings = $query->latest()->get();
+        $bank_settings = $query->ordered()->get();
 
         // Get purposes matching country session context for the amount-adjustment modal
         $activeCountryId = session('active_country_id');
@@ -58,6 +58,38 @@ class BankSettingController extends Controller
         $purposes = $purposesQuery->where('is_active', 1)->get();
 
         return view('bank_setting.index', compact('bank_settings', 'purposes'));
+    }
+
+    public function reorder(Request $request)
+    {
+        $validated = $request->validate([
+            'ids'   => 'required|array|min:1',
+            'ids.*' => 'required|integer|distinct',
+        ]);
+
+        $ids = array_map('intval', $validated['ids']);
+
+        // Only accounts visible in the current country scope may be rearranged
+        $query = BankSetting::whereIn('id', $ids);
+        $this->scopeByCountry($query);
+        $bankSettings = $query->get();
+
+        if ($bankSettings->count() !== count($ids)) {
+            return redirect()->route('bank_setting.index')
+                ->with('error', 'The bank account list has changed. Please refresh the page and try again.');
+        }
+
+        // Reuse the existing sort_order slots of these accounts so accounts in other countries keep their place
+        $slots = $bankSettings->pluck('sort_order')->sortDesc()->values();
+
+        DB::transaction(function () use ($ids, $slots) {
+            foreach ($ids as $index => $id) {
+                BankSetting::where('id', $id)->update(['sort_order' => $slots[$index]]);
+            }
+        });
+
+        return redirect()->route('bank_setting.index')
+            ->with('success', 'Bank account arrangement saved successfully.');
     }
 
     public function create()
@@ -98,6 +130,7 @@ class BankSettingController extends Controller
                 'color'         => $validated['color'],
                 'created_by_id' => Auth::id(),
                 'is_active'     => 1,
+                'sort_order'    => BankSetting::withTrashed()->max('sort_order') + 1, // New account goes on top
             ]);
 
             // 2. Save Phone Numbers if provided

@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::prefix('/bank_setting')->as('bank_setting.')->middleware(['auth'])->group(function() {
     Route::get('/index', 'BankSettingController@index')->name('index');
+    Route::post('/reorder', 'BankSettingController@reorder')->name('reorder');
     Route::get('/create', 'BankSettingController@create')->name('create');
     Route::post('/store', 'BankSettingController@store')->name('store');
     Route::get('/edit/{bank_setting}', 'BankSettingController@edit')->name('edit');

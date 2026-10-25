@@ -19,9 +19,18 @@ class BankSetting extends Model
         'color',
         'path',
         'is_active',
+        'sort_order',
         'created_by_id',
         'country_id'
     ];
+
+    /**
+     * Scope: Superadmin-arranged sequence (highest sort_order on top).
+     */
+    public function scopeOrdered($query)
+    {
+        return $query->orderByDesc('sort_order')->orderByDesc('id');
+    }
 
     public function country()
     {

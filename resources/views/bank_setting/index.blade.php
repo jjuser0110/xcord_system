@@ -14,10 +14,30 @@
             </a>
         </div>
         <div class="card-body">
+            @if($bank_settings->count() > 1)
+                <p class="text-muted small mb-2">
+                    <i class="bx bx-info-circle"></i> Long press a row, then drag it up or down to rearrange. This arrangement is used on the Add Transaction page.
+                </p>
+            @endif
+
+            <!-- Shown only after the arrangement is changed -->
+            <form id="reorderForm" method="POST" action="{{ route('bank_setting.reorder') }}" class="alert alert-warning d-none d-flex flex-wrap justify-content-between align-items-center gap-2 py-2">
+                @csrf
+                <span><i class="bx bx-error-circle"></i> You have unsaved changes to the bank account arrangement.</span>
+                <div id="reorderInputs"></div>
+                <div>
+                    <button type="button" class="btn btn-sm btn-label-secondary" onclick="cancelReorder()">Cancel</button>
+                    <button type="submit" class="btn btn-sm btn-primary">
+                        <i class="bx bx-save me-1"></i> Save Arrangement
+                    </button>
+                </div>
+            </form>
+
             <div class="table-responsive text-nowrap">
                 <table class="table table-bordered">
                     <thead>
                         <tr>
+                            <th style="width: 1%;"></th>
                             <th>No.</th>
                             <th>Color</th>
                             <th>Bank Account <small class="text-muted">(Owner - Bank - Amount)</small></th>
@@ -28,7 +48,7 @@
                             <th>Actions</th>
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody id="bankSettingSortable">
                         @php
                             $paletteMap = [
                                 'white'      => ['hex' => '#ffffff', 'text' => '#333333'],
@@ -48,8 +68,9 @@
 
                             $rowNumber = $bank_settings->count() - $loop->index;
                         @endphp
-                            <tr>
-                            <td>{{ $rowNumber }}</td>
+                            <tr data-id="{{ $setting->id }}">
+                            <td class="text-muted drag-grip" title="Long press and drag to rearrange"><i class="bx bx-grid-vertical"></i></td>
+                            <td class="row-number">{{ $rowNumber }}</td>
                             <td>
                                 <span class="badge" style="background-color: {{ $bgHex }}; color: {{ $textHex }}; border: 1px solid #ddd;">
                                     {{ ucfirst($colorKey) }}
@@ -88,7 +109,7 @@
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="8" class="text-center">No bank account settings found.</td>
+                            <td colspan="9" class="text-center">No bank account settings found.</td>
                         </tr>
                         @endforelse
                     </tbody>
@@ -153,6 +174,79 @@
 
         var myModal = new bootstrap.Modal(document.getElementById('amountModal'));
         myModal.show();
+    }
+</script>
+
+<style>
+    #bankSettingSortable tr[data-id] { cursor: grab; user-select: none; -webkit-user-select: none; }
+    #bankSettingSortable .drag-grip { font-size: 1.2rem; }
+    #bankSettingSortable .sortable-chosen { background-color: #f1f4ff; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15); }
+    #bankSettingSortable .sortable-ghost { opacity: 0.4; }
+</style>
+@endsection
+
+@section('page-js')
+<script src="{{ asset('assets/vendor/libs/sortablejs/sortable.js') }}"></script>
+<script>
+    let reorderDirty = false;
+
+    document.addEventListener('DOMContentLoaded', function () {
+        const tbody = document.getElementById('bankSettingSortable');
+        if (!tbody || tbody.querySelectorAll('tr[data-id]').length < 2) {
+            return;
+        }
+
+        Sortable.create(tbody, {
+            draggable: 'tr[data-id]',
+            delay: 300,                    // Long press (300ms) before dragging starts, mouse and touch
+            touchStartThreshold: 5,        // Small finger movement during the press won't cancel it
+            filter: 'a, button',           // Edit/Delete/amount links keep working normally
+            preventOnFilter: false,
+            animation: 150,
+            onEnd: function (evt) {
+                if (evt.oldIndex === evt.newIndex) {
+                    return;
+                }
+                renumberRows();
+                reorderDirty = true;
+                document.getElementById('reorderForm').classList.remove('d-none');
+            }
+        });
+
+        document.getElementById('reorderForm').addEventListener('submit', function () {
+            const container = document.getElementById('reorderInputs');
+            container.innerHTML = '';
+            tbody.querySelectorAll('tr[data-id]').forEach(function (row) {
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = 'ids[]';
+                input.value = row.dataset.id;
+                container.appendChild(input);
+            });
+            reorderDirty = false;
+            showLoading();
+        });
+
+        window.addEventListener('beforeunload', function (e) {
+            if (reorderDirty) {
+                e.preventDefault();
+                e.returnValue = '';
+            }
+        });
+    });
+
+    // "No." column counts down from the top, same as on page load
+    function renumberRows() {
+        const rows = document.querySelectorAll('#bankSettingSortable tr[data-id]');
+        rows.forEach(function (row, index) {
+            row.querySelector('.row-number').innerText = rows.length - index;
+        });
+    }
+
+    function cancelReorder() {
+        reorderDirty = false;
+        showLoading();
+        window.location.reload();
     }
 </script>
 @endsection
