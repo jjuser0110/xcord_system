@@ -29,7 +29,9 @@ class BankSetting extends Model
      */
     public function scopeOrdered($query)
     {
-        return $query->orderByDesc('sort_order')->orderByDesc('id');
+        // Qualified so it also works on queries joined with other tables
+        return $query->orderByDesc($this->qualifyColumn('sort_order'))
+                     ->orderByDesc($this->qualifyColumn('id'));
     }
 
     public function country()

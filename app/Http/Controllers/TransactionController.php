@@ -81,7 +81,7 @@ class TransactionController extends Controller
         } elseif ($sortBy === 'count') {
             $query->orderBy(DB::raw('COALESCE(bank_monthly_summaries.transaction_count, 0)'), $direction);
         } else {
-            $query->orderBy('bank_settings.id', 'desc');
+            $query->ordered(); // Superadmin-arranged sequence
         }
 
         $bankSettings = $query->paginate(100);
