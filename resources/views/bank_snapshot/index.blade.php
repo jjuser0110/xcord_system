@@ -58,7 +58,12 @@
                             @endphp
                             <tr>
                                 <td>{{ $rowNumber }}</td>
-                                <td class="fw-bold">{{ $setting->owner_name }} - {{ $setting->bank->short_name ?? '-' }}</td>
+                                <td class="fw-bold">
+                                    {{ $setting->owner_name }} - {{ $setting->bank->short_name ?? '-' }}
+                                    @if(!$setting->is_active)
+                                        <span class="badge bg-label-danger ms-1">Inactive</span>
+                                    @endif
+                                </td>
                                 <td class="small text-muted">{{ $selectedDate }}</td>
                                 <td>
                                     <span class="text-success fw-bold">{{ number_format($setting->computed_balance, 2) }}</span>

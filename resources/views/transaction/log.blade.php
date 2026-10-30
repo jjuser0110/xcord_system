@@ -37,7 +37,9 @@
                         <input type="month" name="month" value="{{ $currentMonth }}" class="form-control form-control-sm" onchange="this.form.submit()">
                     </form>
 
-                    @if(optional(auth()->user()->role)->name !== 'staff_viewer')
+                    @if(!$bank_setting->is_active)
+                        <span class="badge bg-label-danger">Inactive</span>
+                    @elseif(optional(auth()->user()->role)->name !== 'staff_viewer')
                         <a href="{{ route('transaction.create', ['bank_setting_id' => $bank_setting->id]) }}" class="btn btn-primary btn-sm">
                             <i class="bx bx-plus me-1"></i> Add
                         </a>

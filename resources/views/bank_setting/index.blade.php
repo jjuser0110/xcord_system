@@ -66,9 +66,9 @@
                             $bgHex = $paletteMap[$colorKey]['hex'] ?? '#ffffff';
                             $textHex = $paletteMap[$colorKey]['text'] ?? '#333333';
 
-                            $rowNumber = $bank_settings->count() - $loop->index;
+                            $rowNumber = $loop->iteration;
                         @endphp
-                            <tr data-id="{{ $setting->id }}">
+                            <tr data-id="{{ $setting->id }}" class="{{ $setting->is_active ? '' : 'row-inactive' }}">
                             <td class="text-muted drag-grip" title="Long press and drag to rearrange"><i class="bx bx-grid-vertical"></i></td>
                             <td class="row-number">{{ $rowNumber }}</td>
                             <td>
@@ -100,6 +100,24 @@
                                     <a href="{{ route('bank_setting.edit', $setting) }}" class="btn btn-sm btn-icon item-edit me-4" onclick="showLoading()" title="Edit">
                                         <i class="bx bx-edit-alt"></i>Edit
                                     </a>
+
+                                    @if($setting->is_active)
+                                        <form method="POST" action="{{ route('bank_setting.inactive', $setting) }}" class="d-inline"
+                                              onsubmit="if(!confirm({{ json_encode('Deactivate ' . $setting->owner_name . ' - ' . ($setting->bank->short_name ?? '') . '? It will no longer appear on the Add Transaction page, but all its records stay visible.') }})){return false;} showLoading();">
+                                            @csrf
+                                            <button type="submit" class="btn btn-label-warning btn-sm me-2" title="Deactivate">
+                                                <i class="bx bx-block"></i>Deactivate
+                                            </button>
+                                        </form>
+                                    @else
+                                        <form method="POST" action="{{ route('bank_setting.active', $setting) }}" class="d-inline"
+                                              onsubmit="if(!confirm({{ json_encode('Activate ' . $setting->owner_name . ' - ' . ($setting->bank->short_name ?? '') . '? It will appear on the Add Transaction page again.') }})){return false;} showLoading();">
+                                            @csrf
+                                            <button type="submit" class="btn btn-label-success btn-sm me-2" title="Activate">
+                                                <i class="bx bx-check-circle"></i>Activate
+                                            </button>
+                                        </form>
+                                    @endif
 
                                     <button type="button" class="btn btn-label-danger btn-sm item-delete" onclick="if(confirm('Are you sure you want to delete?')){showLoading();window.location.href='{{ route('bank_setting.destroy',$setting) }}'}" title="Delete">
                                         <i class="bx bx-trash"></i>Delete
@@ -182,6 +200,7 @@
     #bankSettingSortable .drag-grip { font-size: 1.2rem; }
     #bankSettingSortable .sortable-chosen { background-color: #f1f4ff; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15); }
     #bankSettingSortable .sortable-ghost { opacity: 0.4; }
+    #bankSettingSortable tr.row-inactive > td { background-color: #f5f5f9; color: #a1acb8; }
 </style>
 @endsection
 
@@ -235,11 +254,10 @@
         });
     });
 
-    // "No." column counts down from the top, same as on page load
+    // "No." column counts up from the top (1, 2, 3...), same as on page load
     function renumberRows() {
-        const rows = document.querySelectorAll('#bankSettingSortable tr[data-id]');
-        rows.forEach(function (row, index) {
-            row.querySelector('.row-number').innerText = rows.length - index;
+        document.querySelectorAll('#bankSettingSortable tr[data-id]').forEach(function (row, index) {
+            row.querySelector('.row-number').innerText = index + 1;
         });
     }
 
