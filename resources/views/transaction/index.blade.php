@@ -120,7 +120,7 @@
                                 $bgHex = $paletteMap[$colorKey]['hex'] ?? '#ffffff';
                                 $textHex = $paletteMap[$colorKey]['text'] ?? '#000000';
 
-                                $rowNumber = $bankSettings->total() - (($bankSettings->currentPage() - 1) * $bankSettings->perPage() + $loop->index);
+                                $rowNumber = $bankSettings->firstItem() + $loop->index;
                             @endphp
                             <tr style="background-color: {{ $bgHex }}; color: {{ $textHex }};">
                                 <td style="color: {{ $textHex }};">{{ $rowNumber }}</td>
@@ -129,7 +129,12 @@
                                         {{ ucfirst($colorKey) }}
                                     </span>
                                 </td>
-                                <td style="color: {{ $textHex }};">{{ $setting->owner_name }} - {{ $setting->bank->short_name ?? '-' }}</td>
+                                <td style="color: {{ $textHex }};">
+                                    {{ $setting->owner_name }} - {{ $setting->bank->short_name ?? '-' }}
+                                    @if(!$setting->is_active)
+                                        <span class="badge bg-label-danger ms-1">Inactive</span>
+                                    @endif
+                                </td>
                                 <td style="color: {{ $textHex }};">{{ number_format($setting->monthly_balance, 2) }}</td>
                                 <td>
                                     <span class="badge bg-label-primary">{{ $setting->month_transaction_count ?? 0 }}</span>

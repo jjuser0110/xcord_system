@@ -137,7 +137,8 @@ class TransactionController extends Controller
 
     public function create(Request $request)
     {
-        $query = BankSetting::with('bank');
+        // Inactive bank accounts are not selectable for new transactions
+        $query = BankSetting::with('bank')->where('is_active', 1);
         $this->scopeByCountry($query);
         $bankSettings = $query->ordered()->get();
 
@@ -167,7 +168,7 @@ class TransactionController extends Controller
 
         $selectedBank = null;
         if ($request->filled('bank_setting_id')) {
-            $selectedBank = BankSetting::with('bank')->find($request->bank_setting_id);
+            $selectedBank = BankSetting::with('bank')->where('is_active', 1)->find($request->bank_setting_id);
         }
 
         return view('transaction.create', compact('bankSettings', 'purposes', 'selectedBank'));
@@ -237,6 +238,9 @@ class TransactionController extends Controller
 
                     $sourceBankMeta = BankSetting::find($sourceBankId);
                     $targetBankMeta = BankSetting::find($targetBankId);
+
+                    $this->ensureBankIsActive($sourceBankMeta);
+                    $this->ensureBankIsActive($targetBankMeta);
 
                     foreach ($transfer['items'] as $item) {
                         $amount = $item['amount'];
@@ -338,6 +342,7 @@ class TransactionController extends Controller
                     $purpose = Purpose::find($item['purpose_id']);
 
                     $primaryBank = BankSetting::where('id', $primaryBankId)->lockForUpdate()->firstOrFail();
+                    $this->ensureBankIsActive($primaryBank);
                     $startBalance = $primaryBank->amount;
 
                     if ($direction === '+') {
@@ -390,6 +395,16 @@ class TransactionController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
             return redirect()->back()->withInput()->with('error', 'Error: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Block new transactions on a bank account that was deactivated (e.g. while the form was open).
+     */
+    protected function ensureBankIsActive($bank)
+    {
+        if ($bank && !$bank->is_active) {
+            throw new \Exception('Bank account (' . $bank->owner_name . ') is inactive and cannot be used for new transactions.');
         }
     }
 

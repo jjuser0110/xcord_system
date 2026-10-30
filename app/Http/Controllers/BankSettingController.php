@@ -92,6 +92,23 @@ class BankSettingController extends Controller
             ->with('success', 'Bank account arrangement saved successfully.');
     }
 
+    public function active(BankSetting $bank_setting)
+    {
+        $bank_setting->update(['is_active' => 1]);
+
+        return redirect()->route('bank_setting.index')
+            ->with('success', 'Bank account (' . $bank_setting->owner_name . ') has been activated.');
+    }
+
+    public function inactive(BankSetting $bank_setting)
+    {
+        // Inactive only hides the account from Add Transaction; its records stay visible everywhere else
+        $bank_setting->update(['is_active' => 0]);
+
+        return redirect()->route('bank_setting.index')
+            ->with('success', 'Bank account (' . $bank_setting->owner_name . ') has been deactivated.');
+    }
+
     public function create()
     {
         $query = Bank::with('country');

@@ -17,8 +17,8 @@ class BankSnapshotController extends Controller
         $selectedDate = $request->input('date', Carbon::today()->toDateString());
         $today = Carbon::today()->toDateString();
 
-        // 1. Fetch all active bank settings filtered by country scope
-        $query = BankSetting::with(['bank', 'country'])->where('is_active', 1);
+        // 1. Fetch all bank settings (inactive included, shown with a badge) filtered by country scope
+        $query = BankSetting::with(['bank', 'country']);
         $this->scopeByCountry($query);
         $bankSettings = $query->get()->unique('id');
 
